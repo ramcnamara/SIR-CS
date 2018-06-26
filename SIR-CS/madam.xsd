@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<schema
+	xmlns = "http://www.w3.org/2001/XMLSchema"
+	xmlns:madam = "http://www.monash.edu/MADAM"
+	targetNamespace = "http://www.monash.edu/MADAM"
+	elementFormDefault = "qualified"
+	version = "0.1">
+
+<!-- TYPEDEFS -->
+
+<!--
+Mark is the base type for all assessable tasks.  All tasks have a 
+name and may have a description and marker instructions.  The Name 
+element should be short and suitable for use as a title; the 
+Description can be used for long-form (e.g. paragraph) explanations of 
+tasks, and the MarkerInstruction element is used for information that
+should be displayed only to staff.
+
+All Marks have an optional Label attribute that allows tasks to be 
+displayed as "Task 1", "Question 1", "Problem 1", etc.  If no Label is 
+specified, the default is "Task".
+
+Marks can be for groups or individuals.  Group Marks are saved to the
+records of groupmates as well as to that of the student being marked.
+-->
+
+<complexType name="MarkType" abstract="true"> 
+	<sequence>
+		<element name="Name" type="string"/>
+		<element name="Description" type="string" minOccurs="0"/>
+		<element name="MarkerInstruction" type="string" minOccurs="0"/> 
+	</sequence> 
+	<attribute name="label" type="string"/>
+	<attribute name="group" type="boolean"/>
+</complexType>
+
+
+<!--
+A ScaleType is an ordered collection of Levels and is used to label 
+tickboxes for qualitative marking.  Sample Levels might be "Not done", 
+"Poor", "Good", "Excellent", "N/A".
+-->
+<complexType name="ScaleType">
+	<sequence>
+		<element name="Level" type="string" maxOccurs="unbounded"/>
+	</sequence>
+</complexType>
+
+
+<!-- 
+A Criterion has a description and a scale.
+-->
+<complexType name="CriterionType">
+	<complexContent>
+		<extension base="madam:MarkType">
+			<sequence>
+				<element name="Scale" type="madam:ScaleType"/>
+			</sequence>
+		</extension>
+	</complexContent>
+</complexType>
+
+
+<!--
+Criteria blocks hold one or more criteria, which comprise a description and 
+a qualitative scale for marking.  Criteria can not have subtasks.
+-->
+<complexType name="CriteriaType">
+	<sequence>
+		<element name="Criterion" type="madam:CriterionType" minOccurs="0" maxOccurs="unbounded"/>
+	</sequence>
+</complexType>
+
+
+<!--
+A NumericType is a task that has a numeric mark.  That means it either 
+has at least one numeric subtasks or its mark will be entered by a marker.
+
+NumericType marks that are manually entered should have a maxMark, 
+representing the highest mark available for the question, and may also 
+have a minMark.  This allows users to define marking schemes that allow 
+for late penalties etc. by defining them with a zero maxMark and a negative 
+minMark.  By default, minMark is zero.  If there are numeric subtasks,
+maxMark and minMark attributes will be ignored and values computed from the 
+subtasks will be used instead.
+
+NumericType tasks can be allowed to have bonus marks applied.  If the
+bonus attribute is set to true, MADAM will not check that the mark granted does
+not exceed the maximum mark for the question.
+
+NumericType tasks can have QualitativeType subtasks and criteria as well 
+as NumericType.
+-->
+<complexType name="NumericType">
+	<complexContent>
+		<extension base="madam:MarkType">
+			<sequence>
+				<element name="Criteria" type="madam:CriteriaType" minOccurs="0"/>
+				<element name="Subtasks" minOccurs="0">
+					<complexType>
+						<choice maxOccurs="unbounded">
+							<element ref="madam:Mark"/>
+						</choice>
+					</complexType>
+				</element>
+				
+			</sequence>
+			<attribute name="maxMark" type="decimal"/>
+			<attribute name="minMark" type="decimal"/>
+			<attribute name="hasComment" type="boolean"/>
+			<attribute name="bonus" type="boolean"/>
+			<attribute name="penalty" type="boolean"/>
+		</extension>
+	</complexContent>
+</complexType>
+
+
+<!--
+A QualitativeType task may be graded qualitatively with a scale 
+but does not have a numeric mark.  It may also have subcriteria.  
+maxMark attributes of qualitative tasks are ignored.
+
+QualitativeType tasks can have qualitative subtasks but can not 
+have numerically-marked subtasks.
+-->
+<complexType name="QualitativeType">
+	<complexContent>
+		<extension base="madam:MarkType">
+			<sequence>
+				<element name="Subtasks" minOccurs="0">
+					<complexType>
+						<sequence>
+							<element name="QTask" type="madam:QualitativeType" maxOccurs="unbounded" minOccurs="0"/>
+						</sequence>
+					</complexType>
+				</element>
+				<element name="Criteria" type="madam:CriteriaType" maxOccurs="1" minOccurs="0"/>
+				<element name="Scale" type="madam:ScaleType" minOccurs="0"/>
+			</sequence>
+			<attribute name="hasComment" type="boolean"/>
+		</extension>
+	</complexContent>
+</complexType>
+
+<!-- ROOT ELEMENT -->
+<element name = "Scheme">
+	<complexType>
+		<all>
+			<element name="UnitCode" type="string"/>
+			<element name="ActivityName" type="string"/>
+			<element name="Preamble" type="string" minOccurs="0"/>
+			<element name="Subtitle" type="string" minOccurs="0"/>
+			<element name="Tasks">
+				<complexType>
+					<choice maxOccurs="unbounded">
+						<element ref="madam:Mark"/>
+					</choice>
+				</complexType>
+			</element>
+		</all>
+	</complexType>
+</element>
+
+
+<!-- Polymorphic type declarations -->
+<element name="Mark" type="madam:MarkType"/>
+<element name="QTask" type="madam:QualitativeType" substitutionGroup="madam:Mark"/>
+<element name="Task" type="madam:NumericType" substitutionGroup="madam:Mark"/>
+
+
+</schema>
