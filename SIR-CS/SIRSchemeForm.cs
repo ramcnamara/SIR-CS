@@ -23,6 +23,13 @@ namespace SIR_CS
             subtitleBox.DataBindings.Add(new Binding("Text", myScheme, "Subtitle"));
             preambleBox.DataBindings.Add(new Binding("Text", myScheme, "Preamble"));
 
+            // watch for changes
+            unitCodeBox.TextChanged += new EventHandler(SetDirty);
+            activityNameBox.TextChanged += new EventHandler(SetDirty);
+            subtitleBox.TextChanged += new EventHandler(SetDirty);
+            preambleBox.TextChanged += new EventHandler(SetDirty);
+
+
             // populate tree selector
             // WinForms TreeViews don't do databinding so this must be done by hand
             SIRTreeNode rootNode = new SIRTreeNode(null, myScheme.ActivityName, null);
@@ -70,7 +77,6 @@ namespace SIR_CS
         }
 
 
-
         public SIRSchemeForm(Scheme newScheme, string fileName) : this(newScheme)
         {
             this.myFileName = fileName;
@@ -106,6 +112,58 @@ namespace SIR_CS
 
             myFileName = newFileName;
             Text = newFileName;
+            changedSinceSave = false;
+        }
+
+        private void SetDirty(object sender, EventArgs e) => changedSinceSave = true;
+
+        private bool IsDirty()
+        {
+            if (changedSinceSave) return true;
+ // TODO           if (treeView.IsDirty) return true;
+            if (treeView == null || (treeView.Nodes == null))
+                return false;
+
+            return FindDirtyNodes((SIRTreeNode)treeView.Nodes[0]);
+        }
+
+        private void SetTreeToClean(SIRTreeNode node)
+        {
+            if (node == null) return;
+            node.Panel.ChangedSinceSave = false;
+            foreach(SIRTreeNode child in node.Nodes)
+            {
+                SetTreeToClean(child);
+            }
+        }
+        private bool FindDirtyNodes(SIRTreeNode treeNode)
+        {
+            if (treeNode == null || treeNode.Panel == null)
+                return false;
+
+            if (treeNode.Panel.ChangedSinceSave)
+                return true;
+
+            foreach (SIRTreeNode node in treeNode.Nodes)
+                if (FindDirtyNodes(node))
+                    return true;
+
+            return false;
+        }
+
+        public void CloseWithCheck()
+        {
+            if (IsDirty())
+            {
+                var choice = MessageBox.Show("You have unsaved changes.  Are you sure you want to close?",
+                    "You have unsaved changes",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning);
+
+                if (choice == DialogResult.No)
+                    return;
+            }
+            Close();
         }
     }
 }

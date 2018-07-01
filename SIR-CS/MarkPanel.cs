@@ -5,6 +5,7 @@ using System;
 public partial class MarkPanel: UserControl
 {
     private readonly MarkType mark;
+    internal bool ChangedSinceSave { get; set; }
 
     public event EventHandler TextChangeHandler;
 
@@ -20,11 +21,15 @@ public partial class MarkPanel: UserControl
 
         // wire up events to propagate text changes to the tree
         taskNameBox.TextChanged += new EventHandler(OnTextChanged);
-        //rbGroup.CheckedChanged += new EventHandler(OnTextChanged);
+        rbGroup.CheckedChanged += new EventHandler(OnTextChanged);
+
+        // dirty detection
+        ChangedSinceSave = false;
     }
 
     private void OnTextChanged(object sender, EventArgs e)
     {
+        ChangedSinceSave = true;
         TextChangeHandler?.Invoke(this, e);
     }
 
@@ -34,4 +39,5 @@ public partial class MarkPanel: UserControl
     }
 
     internal string GetTaskName() => (taskNameBox.Text == ""? mark.Name : taskNameBox.Text);
+
 }

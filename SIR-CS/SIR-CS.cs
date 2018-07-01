@@ -112,7 +112,7 @@ namespace SIR_CS
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ((SIRSchemeForm)ActiveMdiChild).Close();
+            ((SIRSchemeForm)ActiveMdiChild).CloseWithCheck();
         }
     }
 }
