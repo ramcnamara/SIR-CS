@@ -1,4 +1,7 @@
-﻿using System.Windows.Forms;
+﻿using System;
+using System.Windows.Forms;
+using System.Xml;
+using System.Xml.Serialization;
 
 namespace SIR_CS
 {
@@ -71,6 +74,38 @@ namespace SIR_CS
         public SIRSchemeForm(Scheme newScheme, string fileName) : this(newScheme)
         {
             this.myFileName = fileName;
+            Text = fileName;
+        }
+
+        internal void Save()
+        {
+            SaveAs(myFileName);
+        }
+
+        internal void SaveAs(string newFileName)
+        {
+            // TODO: check that file open succeeded
+            XmlSerializer serializer = new XmlSerializer(typeof(Scheme));
+            XmlWriter writer;
+            try
+            {
+                writer = XmlWriter.Create(newFileName);
+            }
+            catch (System.IO.IOException e)
+            {
+                MessageBox.Show("There was a problem writing to that file.  " +
+                   "Check that it is not being used by another program, and that " +
+                   "you have permission to write to it.  \n\nTechnical details: " + e.Message,
+                    "IO exception on save",
+                   MessageBoxButtons.OK,
+                   MessageBoxIcon.Error);
+                return;
+            }
+            serializer.Serialize(writer, myScheme);
+            writer.Close();
+
+            myFileName = newFileName;
+            Text = newFileName;
         }
     }
 }
