@@ -9,6 +9,7 @@ namespace SIR_CS
     {
         private Scheme myScheme;
         private string myFileName;
+        private bool changedSinceSave = false;
 
 
         public SIRSchemeForm(Scheme newScheme)
@@ -41,34 +42,33 @@ namespace SIR_CS
             treeView.ExpandAll();
         }
 
+        // <summary>
+        // Recurse down the tree of tasks and subtasks.  Criteria are handled
+        // separately despite being descendants of MarkType because they never have
+        // subtasks of their own.
+        // </summary>
         private void Traverse(SIRTreeNode parent, dynamic mark)
         {
             MarkPanel mp = new MarkPanel(mark);
             SIRTreeNode newNode = new SIRTreeNode(mark, mark.Name, mp);
             parent.Nodes.Add(newNode);
 
-            HandleCriteriaAndSubtasks(mark, newNode, mp);
-        }
-
-
-        private void HandleCriteriaAndSubtasks(dynamic task, SIRTreeNode parent, MarkPanel mp)
-        {
-            if (task.Criteria != null)
+            if (mark.Criteria != null)
             {
-                foreach (CriterionType criterion in task.Criteria)
+                foreach (CriterionType criterion in mark.Criteria)
                 {
                     parent.Nodes.Add(new SIRTreeNode(criterion, criterion.Name, mp));
                 }
             }
-
-            if (task.Subtasks != null)
+            if (mark.Subtasks != null)
             {
-                foreach (dynamic subtask in task.Subtasks)
+                foreach (dynamic subtask in mark.Subtasks)
                 {
                     Traverse(parent, subtask);
                 }
             }
         }
+
 
 
         public SIRSchemeForm(Scheme newScheme, string fileName) : this(newScheme)

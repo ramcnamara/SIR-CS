@@ -109,5 +109,10 @@ namespace SIR_CS
                 ((SIRSchemeForm)ActiveMdiChild).SaveAs(dlg.FileName);
             }
         }
+
+        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ((SIRSchemeForm)ActiveMdiChild).Close();
+        }
     }
 }
