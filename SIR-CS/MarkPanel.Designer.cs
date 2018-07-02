@@ -33,10 +33,12 @@
             this.label2 = new System.Windows.Forms.Label();
             this.InnerPanel = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.rbGroup = new System.Windows.Forms.RadioButton();
             this.rbIndividual = new System.Windows.Forms.RadioButton();
+            this.rbGroup = new System.Windows.Forms.RadioButton();
+            this.criterionTable = new System.Windows.Forms.DataGridView();
             this.InnerPanel.SuspendLayout();
             this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.criterionTable)).BeginInit();
             this.SuspendLayout();
             // 
             // taskNameBox
@@ -54,7 +56,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.taskDescBox.Location = new System.Drawing.Point(105, 52);
             this.taskDescBox.Name = "taskDescBox";
-            this.taskDescBox.Size = new System.Drawing.Size(672, 69);
+            this.taskDescBox.Size = new System.Drawing.Size(672, 46);
             this.taskDescBox.TabIndex = 1;
             this.taskDescBox.Text = "";
             // 
@@ -82,6 +84,7 @@
             // 
             this.InnerPanel.AutoSize = true;
             this.InnerPanel.AutoSizeMode = System.Windows.Forms.AutoSizeMode.GrowAndShrink;
+            this.InnerPanel.Controls.Add(this.criterionTable);
             this.InnerPanel.Controls.Add(this.groupBox1);
             this.InnerPanel.Controls.Add(this.label2);
             this.InnerPanel.Controls.Add(this.label1);
@@ -97,23 +100,12 @@
             // 
             this.groupBox1.Controls.Add(this.rbIndividual);
             this.groupBox1.Controls.Add(this.rbGroup);
-            this.groupBox1.Location = new System.Drawing.Point(31, 135);
+            this.groupBox1.Location = new System.Drawing.Point(31, 104);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(131, 80);
+            this.groupBox1.Size = new System.Drawing.Size(131, 68);
             this.groupBox1.TabIndex = 4;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Group task?";
-            // 
-            // rbGroup
-            // 
-            this.rbGroup.AutoSize = true;
-            this.rbGroup.Location = new System.Drawing.Point(7, 20);
-            this.rbGroup.Name = "rbGroup";
-            this.rbGroup.Size = new System.Drawing.Size(54, 17);
-            this.rbGroup.TabIndex = 0;
-            this.rbGroup.TabStop = true;
-            this.rbGroup.Text = "Group";
-            this.rbGroup.UseVisualStyleBackColor = true;
             // 
             // rbIndividual
             // 
@@ -126,6 +118,26 @@
             this.rbIndividual.Text = "Individual";
             this.rbIndividual.UseVisualStyleBackColor = true;
             // 
+            // rbGroup
+            // 
+            this.rbGroup.AutoSize = true;
+            this.rbGroup.Location = new System.Drawing.Point(7, 20);
+            this.rbGroup.Name = "rbGroup";
+            this.rbGroup.Size = new System.Drawing.Size(54, 17);
+            this.rbGroup.TabIndex = 0;
+            this.rbGroup.TabStop = true;
+            this.rbGroup.Text = "Group";
+            this.rbGroup.UseVisualStyleBackColor = true;
+            // 
+            // criterionTable
+            // 
+            this.criterionTable.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
+            this.criterionTable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.criterionTable.Location = new System.Drawing.Point(31, 178);
+            this.criterionTable.Name = "criterionTable";
+            this.criterionTable.Size = new System.Drawing.Size(746, 255);
+            this.criterionTable.TabIndex = 5;
+            // 
             // MarkPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -137,6 +149,7 @@
             this.InnerPanel.PerformLayout();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.criterionTable)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -152,4 +165,5 @@
     private System.Windows.Forms.GroupBox groupBox1;
     private System.Windows.Forms.RadioButton rbIndividual;
     private System.Windows.Forms.RadioButton rbGroup;
+    private System.Windows.Forms.DataGridView criterionTable;
 }
