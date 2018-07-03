@@ -64,14 +64,14 @@ namespace SIR_CS
             {
                 foreach (CriterionType criterion in mark.Criteria)
                 {
-                    parent.Nodes.Add(new SIRTreeNode(criterion, criterion.Name, mp));
+                    newNode.Nodes.Add(new SIRTreeNode(criterion, criterion.Name, mp));
                 }
             }
             if (mark.Subtasks != null)
             {
                 foreach (dynamic subtask in mark.Subtasks)
                 {
-                    Traverse(parent, subtask);
+                    Traverse(newNode, subtask);
                 }
             }
         }
