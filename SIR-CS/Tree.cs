@@ -193,8 +193,8 @@ namespace SIR_CS
                 return false;
 
             // Only Criteria can't be dropped on the root
-            if (node1 == treeView.Nodes[0])
-                return !(node2.Mark is CriterionType);
+            if (node2 == treeView.Nodes[0])
+                return !(node1.Mark is CriterionType);
 
             // Otherwise, check for identity or  parent relationships
             if (node2.Parent == null) return true;
