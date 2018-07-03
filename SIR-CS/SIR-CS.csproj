@@ -110,5 +110,9 @@
       <Name>Expander</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="SaveAll_16x.svg" />
+    <Content Include="Save_16x.svg" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

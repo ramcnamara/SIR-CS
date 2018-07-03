@@ -23,10 +23,41 @@ public partial class MarkPanel: UserControl
         rbGroup.DataBindings.Add(new Binding("Checked", mark, "group"));
         rbIndividual.DataBindings.Add(InvertedBinding.Create(rbGroup, "Checked"));
 
-        // bind table of criteria
-        NumericType nt = newMark as NumericType;
+        // handle metadata that are only present for numeric tasks
+        NumericType nt = mark as NumericType;
+
         if (nt != null)
         {
+            cbBonus.DataBindings.Add(new Binding("Checked", mark, "bonus"));
+
+            decimal computedMaxMark = 0;
+            bool hasNumericSubtasks = false;
+
+            if (nt.Subtasks != null)
+            {
+
+                foreach (var st in nt.Subtasks)
+                    if (st is NumericType)
+                    {
+                        hasNumericSubtasks = true;
+                        computedMaxMark += ((NumericType)st).GetTotalMaxMark();
+                    }
+            }
+            // set value of max mark box
+            if (hasNumericSubtasks)
+            {
+                maxMarkBox.Text = computedMaxMark.ToString("0.0");
+                maxMarkBox.Enabled = false;
+                maxMarkLabel.Enabled = false;
+            }
+            else
+            {
+                maxMarkBox.DataBindings.Add(new Binding("Text", mark as NumericType, "maxMark"));
+                maxMarkBox.Enabled = true;
+                maxMarkLabel.Enabled = true;
+                maxMarkBox.TextChanged += new EventHandler(OnTextChanged);
+            }
+            // bind table of criteria
             criteriaSource = nt.Criteria;
         }
         else
@@ -54,6 +85,8 @@ public partial class MarkPanel: UserControl
         // wire up events to propagate text changes to the tree
         taskNameBox.TextChanged += new EventHandler(OnTextChanged);
         rbGroup.CheckedChanged += new EventHandler(OnTextChanged);
+        cbBonus.CheckedChanged += new EventHandler(OnTextChanged);
+        cbPenalty.CheckedChanged += new EventHandler(OnTextChanged);
 
         // dirty detection
         ChangedSinceSave = false;
