@@ -24,11 +24,11 @@ public partial class MarkPanel: UserControl
         rbIndividual.DataBindings.Add(InvertedBinding.Create(rbGroup, "Checked"));
 
         // handle metadata that are only present for numeric tasks
-        NumericType nt = mark as NumericType;
 
-        if (nt != null)
+        if (mark is NumericType nt)
         {
-            cbBonus.DataBindings.Add(new Binding("Checked", mark, "bonus"));
+            cbBonus.DataBindings.Add(new Binding("Checked", nt, "bonus"));
+            cbPenalty.DataBindings.Add(new Binding("Checked", nt, "penalty"));
 
             decimal computedMaxMark = 0;
             bool hasNumericSubtasks = false;
@@ -52,7 +52,7 @@ public partial class MarkPanel: UserControl
             }
             else
             {
-                maxMarkBox.DataBindings.Add(new Binding("Text", mark as NumericType, "maxMark"));
+                maxMarkBox.DataBindings.Add(new Binding("Text", nt, "maxMark"));
                 maxMarkBox.Enabled = true;
                 maxMarkLabel.Enabled = true;
                 maxMarkBox.TextChanged += new EventHandler(OnTextChanged);
@@ -62,8 +62,9 @@ public partial class MarkPanel: UserControl
         }
         else
         {
-            QualitativeType qt = newMark as QualitativeType;
-            if (qt != null)
+            cbBonus.Enabled = false;
+            cbPenalty.Enabled = false;
+            if (newMark is QualitativeType qt)
             {
                 criteriaSource = qt.Criteria;
             }

@@ -340,7 +340,7 @@
             this.saveButton.Name = "saveButton";
             this.saveButton.Size = new System.Drawing.Size(23, 22);
             this.saveButton.Text = "Save";
-            this.saveButton.Click += new System.EventHandler(this.saveButton_Click);
+            this.saveButton.Click += new System.EventHandler(this.SaveButton_Click);
             // 
             // toolStripButton1
             // 
@@ -350,7 +350,7 @@
             this.toolStripButton1.Name = "toolStripButton1";
             this.toolStripButton1.Size = new System.Drawing.Size(23, 22);
             this.toolStripButton1.Text = "Save All";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            this.toolStripButton1.Click += new System.EventHandler(this.SaveAllButton_Click);
             // 
             // SIRMainForm
             // 

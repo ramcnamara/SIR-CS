@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Xml;
 using System.Xml.Serialization;
@@ -98,11 +91,12 @@ namespace SIR_CS
 
         private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SaveFileDialog dlg = new SaveFileDialog();
-
-            dlg.Filter = "MADAM marking schemes (*.xml)|*.xml|All files (*.*)|*.*";
-            dlg.FilterIndex = 1;
-            dlg.RestoreDirectory = true;
+            SaveFileDialog dlg = new SaveFileDialog
+            {
+                Filter = "MADAM marking schemes (*.xml)|*.xml|All files (*.*)|*.*",
+                FilterIndex = 1,
+                RestoreDirectory = true
+            };
 
             if (dlg.ShowDialog() == DialogResult.OK)
             {
@@ -115,9 +109,9 @@ namespace SIR_CS
             ((SIRSchemeForm)ActiveMdiChild).CloseWithCheck();
         }
 
-        private void saveButton_Click(object sender, EventArgs e) => ((SIRSchemeForm)ActiveMdiChild).Save();
+        private void SaveButton_Click(object sender, EventArgs e) => ((SIRSchemeForm)ActiveMdiChild).Save();
 
-        private void toolStripButton1_Click(object sender, EventArgs e)
+        private void SaveAllButton_Click(object sender, EventArgs e)
         {
             foreach (var child in MdiChildren)
                 ((SIRSchemeForm)child).Save();

@@ -107,6 +107,7 @@
             // 
             // criterionTable
             // 
+            this.criterionTable.AllowDrop = true;
             this.criterionTable.AutoSizeColumnsMode = System.Windows.Forms.DataGridViewAutoSizeColumnsMode.Fill;
             this.criterionTable.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.criterionTable.Location = new System.Drawing.Point(31, 178);

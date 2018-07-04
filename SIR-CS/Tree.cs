@@ -2,6 +2,7 @@
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
+using System.Xml.Serialization;
 
 namespace SIR_CS
 {
@@ -188,13 +189,14 @@ namespace SIR_CS
         // Can node1 be dropped onto node2?
         private bool CanDropOn(SIRTreeNode node1, SIRTreeNode node2)
         {
-            // Nothing can be dropped on Criteria
-            if (node2.Mark is CriterionType)
-                return false;
 
             // Only Criteria can't be dropped on the root
             if (node2 == treeView.Nodes[0])
                 return !(node1.Mark is CriterionType);
+
+            // Nothing can be dropped on Criteria
+            if (node2.Mark is CriterionType)
+                return false;
 
             // Otherwise, check for identity or  parent relationships
             if (node2.Parent == null) return true;
@@ -217,7 +219,8 @@ public partial class NumericType
         decimal totalMaxMark = 0;
         foreach (NumericType task in subtasksField.Where(st => st is NumericType))
         {
-            totalMaxMark += task.GetTotalMaxMark();
+            if (bonus == task.bonus && penalty == task.penalty)
+                totalMaxMark += task.GetTotalMaxMark();
         }
 
         return totalMaxMark;
