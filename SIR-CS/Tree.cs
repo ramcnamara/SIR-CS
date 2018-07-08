@@ -17,13 +17,13 @@ namespace SIR_CS
         {
             public MarkType Mark { get; private set; }
             public MarkPanel Panel { get; private set; }
-
+            
             public SIRTreeNode(MarkType newMark, string text, MarkPanel mp) : base(text)
             {
                 Mark = newMark;
                 Panel = mp;
 
-                RefreshNodeStrings();
+                RefreshNodeDisplay();
 
                 // wire up events
                 if (Panel != null && !(Mark is CriterionType))
@@ -35,38 +35,42 @@ namespace SIR_CS
             public void OnChange(object sender, EventArgs e)
             {
                 System.Diagnostics.Debug.WriteLine($"OnChange handler: {Mark.Name}");
-                RefreshNodeStrings();
+                RefreshNodeDisplay();
 
                 // if the max mark changed, we need to propagate
                 SIRTreeNode ancestor = Parent as SIRTreeNode;
                 while (ancestor != null)
                 {
-                    ancestor.RefreshNodeStrings();
+                    ancestor.RefreshNodeDisplay();
                     ancestor = ancestor.Parent as SIRTreeNode;
                 }
             }
 
-            private void RefreshNodeStrings()
+            private void RefreshNodeDisplay()
             {
+                bool bonus = false;
+                bool penalty = false;
                 if (Mark == null) return;
                 string desc = "";
                 if (Mark is CriterionType)
                 {
                     Text = Mark.Name;
+                    ImageIndex = 6;
+                    SelectedImageIndex = 6;
                     return;
                 }
                 if (Mark is QualitativeType)
                     desc = "(qualitative) ";
                 else if (Mark is NumericType)
-                {
-                    // TODO: scrape from 
+                { 
                     desc = $"({((NumericType)Mark).GetTotalMaxMark()} marks) ";
                 }
+
 
                 desc += Panel.GetTaskName();
 
                 // handle flags
-                string flags = Mark.group ? "(group" : ""; ;
+                string flags = (Mark.groupSpecified && Mark.group) ? "(group" : ""; ;
 
                 if (Mark is NumericType task)
                 {
@@ -76,6 +80,7 @@ namespace SIR_CS
                         if (flags == "")
                             flags = "(bonus";
                         else flags = "group, bonus";
+                        bonus = true;
                     }
 
                     if (task.penaltySpecified && task.penalty)
@@ -83,6 +88,7 @@ namespace SIR_CS
                         if (flags == "")
                             flags = "(penalty";
                         else flags += ", penalty";
+                        penalty = true;
                     }
 
                     if (flags != "")
@@ -90,6 +96,30 @@ namespace SIR_CS
                 }
 
                 Text = $"{desc} {flags}";
+
+                // Set the image icon.
+                if (Mark is CriterionType)
+                {
+                    System.Diagnostics.Debug.WriteLine($"{Mark.Name} is a Criterion");
+                    ImageIndex = 6;
+                }
+                else if (Mark.groupSpecified && Mark.group)
+                {
+                    if (bonus)
+                        ImageIndex = 1;
+                    else if (penalty)
+                        ImageIndex = 2;
+                    else
+                        ImageIndex = 0;
+                }
+                else if (bonus)
+                    ImageIndex = 4;
+                else if (penalty)
+                    ImageIndex = 5;
+                else
+                    ImageIndex = 3;
+
+                SelectedImageIndex = ImageIndex;
             }
         }
 
@@ -189,7 +219,7 @@ namespace SIR_CS
                 DrawLeafBottomPlaceholders(targetNode, targetNode.Parent as SIRTreeNode, CanDropOn(draggedNode, dest));
             }
 
-            else
+            else if (CanDropOn(draggedNode, targetNode))
             {
                 DrawAddToFolderPlaceholder(targetNode, CanDropOn(draggedNode, dest));
             }
@@ -311,8 +341,8 @@ namespace SIR_CS
         {
             Graphics g = this.treeView.CreateGraphics();
 
-            Color color = possible ? Color.Black : Color.Gray;
-            int NodeOverImageWidth = 0;// this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
+            Color color = possible ? Color.Black : Color.LightGray;
+            int NodeOverImageWidth =  this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
             int LeftPos = NodeOver.Bounds.Left - NodeOverImageWidth;
             int RightPos = this.treeView.Width - 4;
 
@@ -331,9 +361,9 @@ namespace SIR_CS
                                                     new Point(RightPos, NodeOver.Bounds.Top - 5)};
 
 
-            g.FillPolygon(System.Drawing.Brushes.Black, LeftTriangle);
-            g.FillPolygon(System.Drawing.Brushes.Black, RightTriangle);
-            g.DrawLine(new System.Drawing.Pen(Color.Black, 2), new Point(LeftPos, NodeOver.Bounds.Top), new Point(RightPos, NodeOver.Bounds.Top));
+            g.FillPolygon(Brushes.Black, LeftTriangle);
+            g.FillPolygon(Brushes.Black, RightTriangle);
+            g.DrawLine(new Pen(Color.Black, 2), new Point(LeftPos, NodeOver.Bounds.Top), new Point(RightPos, NodeOver.Bounds.Top));
 
         }//eom
 
@@ -341,16 +371,16 @@ namespace SIR_CS
         {
             Graphics g = this.treeView.CreateGraphics();
 
-            int NodeOverImageWidth = 0; //this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
+            int NodeOverImageWidth = this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
             // Once again, we are not dragging to node over, draw the placeholder using the ParentDragDrop bounds
             int LeftPos, RightPos;
-            if (ParentDragDrop != null)
-                LeftPos = ParentDragDrop.Bounds.Left - 8;// (this.treeView.ImageList.Images[ParentDragDrop.ImageIndex].Size.Width + 8);
+            if (ParentDragDrop != null && ParentDragDrop.ImageIndex != -1)
+                LeftPos = ParentDragDrop.Bounds.Left - (treeView.ImageList.Images[ParentDragDrop.ImageIndex].Size.Width + 8);
             else
                 LeftPos = NodeOver.Bounds.Left - NodeOverImageWidth;
             RightPos = this.treeView.Width - 4;
             Color color = possible ? Color.Black : Color.Gray;
-
+            Brush brush = new SolidBrush(color);
             Point[] LeftTriangle = new Point[5]{
                                                    new Point(LeftPos, NodeOver.Bounds.Bottom - 4),
                                                    new Point(LeftPos, NodeOver.Bounds.Bottom + 4),
@@ -366,20 +396,21 @@ namespace SIR_CS
                                                     new Point(RightPos, NodeOver.Bounds.Bottom - 5)};
 
 
-            g.FillPolygon(System.Drawing.Brushes.Black, LeftTriangle);
-            g.FillPolygon(System.Drawing.Brushes.Black, RightTriangle);
-            g.DrawLine(new System.Drawing.Pen(Color.Black, 2), new Point(LeftPos, NodeOver.Bounds.Bottom), new Point(RightPos, NodeOver.Bounds.Bottom));
+            g.FillPolygon(brush, LeftTriangle);
+            g.FillPolygon(brush, RightTriangle);
+            g.DrawLine(new Pen(color, 2), new Point(LeftPos, NodeOver.Bounds.Bottom), new Point(RightPos, NodeOver.Bounds.Bottom));
         }//eom
 
         private void DrawFolderTopPlaceholders(SIRTreeNode NodeOver, bool possible)
         {
             Graphics g = this.treeView.CreateGraphics();
-            int NodeOverImageWidth = 0;// this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
+            int NodeOverImageWidth = this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
 
             int LeftPos, RightPos;
             LeftPos = NodeOver.Bounds.Left - NodeOverImageWidth;
             RightPos = this.treeView.Width - 4;
             Color color = possible ? Color.Black : Color.Gray;
+            Brush brush = new SolidBrush(color);
 
             Point[] LeftTriangle = new Point[5]{
                                                    new Point(LeftPos, NodeOver.Bounds.Top - 4),
@@ -396,9 +427,9 @@ namespace SIR_CS
                                                     new Point(RightPos, NodeOver.Bounds.Top - 5)};
 
 
-            g.FillPolygon(System.Drawing.Brushes.Black, LeftTriangle);
-            g.FillPolygon(System.Drawing.Brushes.Black, RightTriangle);
-            g.DrawLine(new System.Drawing.Pen(Color.Black, 2), new Point(LeftPos, NodeOver.Bounds.Top), new Point(RightPos, NodeOver.Bounds.Top));
+            g.FillPolygon(brush, LeftTriangle);
+            g.FillPolygon(brush, RightTriangle);
+            g.DrawLine(new Pen(Color.Black, 2), new Point(LeftPos, NodeOver.Bounds.Top), new Point(RightPos, NodeOver.Bounds.Top));
 
         }//eom
         private void DrawAddToFolderPlaceholder(SIRTreeNode NodeOver, bool possible)
@@ -406,6 +437,7 @@ namespace SIR_CS
             Graphics g = treeView.CreateGraphics();
             int RightPos = NodeOver.Bounds.Right + 6;
             Color color = possible ? Color.Black : Color.Gray;
+            Brush brush = new SolidBrush(color);
             Point[] RightTriangle = new Point[5]{
                                                     new Point(RightPos, NodeOver.Bounds.Y + (NodeOver.Bounds.Height / 2) + 4),
                                                     new Point(RightPos, NodeOver.Bounds.Y + (NodeOver.Bounds.Height / 2) + 4),
@@ -414,7 +446,7 @@ namespace SIR_CS
                                                     new Point(RightPos, NodeOver.Bounds.Y + (NodeOver.Bounds.Height / 2) - 5)};
 
 
-            g.FillPolygon(System.Drawing.Brushes.Black, RightTriangle);
+            g.FillPolygon(brush, RightTriangle);
         }//eom
 
         #endregion

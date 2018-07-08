@@ -28,8 +28,12 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SIRSchemeForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.treeView = new System.Windows.Forms.TreeView();
+            this.treeIcons = new System.Windows.Forms.ImageList(this.components);
+            this.nodeSeparator = new System.Windows.Forms.Label();
             this.cardPanel = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.preambleBox = new System.Windows.Forms.RichTextBox();
@@ -40,7 +44,6 @@
             this.unitCodeBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
-            this.nodeSeparator = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -78,11 +81,38 @@
             this.treeView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.treeView.ImageIndex = 0;
+            this.treeView.ImageList = this.treeIcons;
             this.treeView.Location = new System.Drawing.Point(6, 6);
             this.treeView.Name = "treeView";
+            this.treeView.SelectedImageIndex = 0;
             this.treeView.Size = new System.Drawing.Size(286, 548);
             this.treeView.TabIndex = 0;
             this.treeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.TreeView_AfterSelect);
+            // 
+            // treeIcons
+            // 
+            this.treeIcons.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("treeIcons.ImageStream")));
+            this.treeIcons.TransparentColor = System.Drawing.Color.Transparent;
+            this.treeIcons.Images.SetKeyName(0, "group.bmp");
+            this.treeIcons.Images.SetKeyName(1, "group-bonus.bmp");
+            this.treeIcons.Images.SetKeyName(2, "group-penalty.bmp");
+            this.treeIcons.Images.SetKeyName(3, "Individual.bmp");
+            this.treeIcons.Images.SetKeyName(4, "Individual-bonus.bmp");
+            this.treeIcons.Images.SetKeyName(5, "Individual-penalty.bmp");
+            this.treeIcons.Images.SetKeyName(6, "CheckBox_16x_24.bmp");
+            // 
+            // nodeSeparator
+            // 
+            this.nodeSeparator.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.nodeSeparator.AutoSize = true;
+            this.nodeSeparator.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.nodeSeparator.Font = new System.Drawing.Font("Microsoft Sans Serif", 2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+            this.nodeSeparator.Location = new System.Drawing.Point(250, 20);
+            this.nodeSeparator.Name = "nodeSeparator";
+            this.nodeSeparator.Size = new System.Drawing.Size(2, 4);
+            this.nodeSeparator.TabIndex = 7;
+            this.nodeSeparator.Visible = false;
             // 
             // cardPanel
             // 
@@ -185,18 +215,6 @@
             this.label1.TabIndex = 0;
             this.label1.Text = "Unit code";
             // 
-            // nodeSeparator
-            // 
-            this.nodeSeparator.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.nodeSeparator.AutoSize = true;
-            this.nodeSeparator.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.nodeSeparator.Font = new System.Drawing.Font("Microsoft Sans Serif", 2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
-            this.nodeSeparator.Location = new System.Drawing.Point(250, 20);
-            this.nodeSeparator.Name = "nodeSeparator";
-            this.nodeSeparator.Size = new System.Drawing.Size(2, 4);
-            this.nodeSeparator.TabIndex = 7;
-            this.nodeSeparator.Visible = false;
-            // 
             // SIRSchemeForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -232,5 +250,6 @@
         private System.Windows.Forms.TextBox subtitleBox;
         private System.Windows.Forms.Panel cardPanel;
         private System.Windows.Forms.Label nodeSeparator;
+        private System.Windows.Forms.ImageList treeIcons;
     }
 }

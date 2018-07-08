@@ -87,7 +87,7 @@ namespace SIR_CS
             this.LayoutMdi(MdiLayout.TileVertical);
         }
 
-        private void SaveToolStripMenuItem_Click(object sender, EventArgs e) => ((SIRSchemeForm)ActiveMdiChild).Save();
+        private void SaveToolStripMenuItem_Click(object sender, EventArgs e) => ((SIRSchemeForm)ActiveMdiChild)?.Save();
 
         private void SaveAsToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -109,7 +109,7 @@ namespace SIR_CS
             ((SIRSchemeForm)ActiveMdiChild).CloseWithCheck();
         }
 
-        private void SaveButton_Click(object sender, EventArgs e) => ((SIRSchemeForm)ActiveMdiChild).Save();
+        private void SaveButton_Click(object sender, EventArgs e) => ((SIRSchemeForm)ActiveMdiChild)?.Save();
 
         private void SaveAllButton_Click(object sender, EventArgs e)
         {
