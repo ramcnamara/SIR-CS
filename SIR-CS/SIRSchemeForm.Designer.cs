@@ -40,6 +40,7 @@
             this.unitCodeBox = new System.Windows.Forms.TextBox();
             this.label2 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
+            this.nodeSeparator = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -59,12 +60,14 @@
             // 
             // splitContainer1.Panel2
             // 
+            this.splitContainer1.Panel2.Controls.Add(this.nodeSeparator);
             this.splitContainer1.Panel2.Controls.Add(this.cardPanel);
             this.splitContainer1.Panel2.Controls.Add(this.groupBox1);
             this.splitContainer1.Panel2.Controls.Add(this.activityNameBox);
             this.splitContainer1.Panel2.Controls.Add(this.unitCodeBox);
             this.splitContainer1.Panel2.Controls.Add(this.label2);
             this.splitContainer1.Panel2.Controls.Add(this.label1);
+            this.splitContainer1.Panel2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.splitContainer1.Size = new System.Drawing.Size(978, 555);
             this.splitContainer1.SplitterDistance = 324;
             this.splitContainer1.TabIndex = 0;
@@ -143,7 +146,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.subtitleBox.Location = new System.Drawing.Point(94, 16);
             this.subtitleBox.Name = "subtitleBox";
-            this.subtitleBox.Size = new System.Drawing.Size(511, 20);
+            this.subtitleBox.Size = new System.Drawing.Size(511, 22);
             this.subtitleBox.TabIndex = 0;
             // 
             // activityNameBox
@@ -152,14 +155,14 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.activityNameBox.Location = new System.Drawing.Point(102, 34);
             this.activityNameBox.Name = "activityNameBox";
-            this.activityNameBox.Size = new System.Drawing.Size(511, 20);
+            this.activityNameBox.Size = new System.Drawing.Size(511, 22);
             this.activityNameBox.TabIndex = 3;
             // 
             // unitCodeBox
             // 
             this.unitCodeBox.Location = new System.Drawing.Point(102, 9);
             this.unitCodeBox.Name = "unitCodeBox";
-            this.unitCodeBox.Size = new System.Drawing.Size(108, 20);
+            this.unitCodeBox.Size = new System.Drawing.Size(108, 22);
             this.unitCodeBox.TabIndex = 2;
             // 
             // label2
@@ -181,6 +184,18 @@
             this.label1.Size = new System.Drawing.Size(62, 13);
             this.label1.TabIndex = 0;
             this.label1.Text = "Unit code";
+            // 
+            // nodeSeparator
+            // 
+            this.nodeSeparator.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
+            this.nodeSeparator.AutoSize = true;
+            this.nodeSeparator.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.nodeSeparator.Font = new System.Drawing.Font("Microsoft Sans Serif", 2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
+            this.nodeSeparator.Location = new System.Drawing.Point(250, 20);
+            this.nodeSeparator.Name = "nodeSeparator";
+            this.nodeSeparator.Size = new System.Drawing.Size(2, 4);
+            this.nodeSeparator.TabIndex = 7;
+            this.nodeSeparator.Visible = false;
             // 
             // SIRSchemeForm
             // 
@@ -216,5 +231,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox subtitleBox;
         private System.Windows.Forms.Panel cardPanel;
+        private System.Windows.Forms.Label nodeSeparator;
     }
 }

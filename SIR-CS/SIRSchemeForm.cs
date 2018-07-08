@@ -7,7 +7,7 @@ namespace SIR_CS
 {
     public partial class SIRSchemeForm : Form
     {
-        private Scheme myScheme;
+        private Scheme formScheme;
         private string myFileName;
         private bool changedSinceSave = false;
 
@@ -16,12 +16,12 @@ namespace SIR_CS
         {
 
             // populate marking scheme metadata edit boxes
-            this.myScheme = newScheme;
+            this.formScheme = newScheme;
             InitializeComponent();
-            unitCodeBox.DataBindings.Add(new Binding("Text", myScheme, "UnitCode"));
-            activityNameBox.DataBindings.Add(new Binding("Text", myScheme, "ActivityName"));
-            subtitleBox.DataBindings.Add(new Binding("Text", myScheme, "Subtitle"));
-            preambleBox.DataBindings.Add(new Binding("Text", myScheme, "Preamble"));
+            unitCodeBox.DataBindings.Add(new Binding("Text", formScheme, "UnitCode"));
+            activityNameBox.DataBindings.Add(new Binding("Text", formScheme, "ActivityName"));
+            subtitleBox.DataBindings.Add(new Binding("Text", formScheme, "Subtitle"));
+            preambleBox.DataBindings.Add(new Binding("Text", formScheme, "Preamble"));
 
             // watch for changes
             unitCodeBox.TextChanged += new EventHandler(SetDirty);
@@ -32,12 +32,12 @@ namespace SIR_CS
 
             // populate tree selector
             // WinForms TreeViews don't do databinding so this must be done by hand
-            SIRTreeNode rootNode = new SIRTreeNode(null, myScheme.ActivityName, null);
+            SIRTreeNode rootNode = new SIRTreeNode(null, formScheme.ActivityName, null);
             treeView.Nodes.Add(rootNode);
-            if (myScheme.Tasks != null)
-                foreach (var task in myScheme.Tasks)
+            if (formScheme.Tasks != null)
+                foreach (var task in formScheme.Tasks)
                 {
-                    Traverse(rootNode, task);
+                    CreateSubtree(rootNode, task);
                 }
 
             // Enable drag/drop reorder
@@ -54,7 +54,7 @@ namespace SIR_CS
         // separately despite being descendants of MarkType because they never have
         // subtasks of their own.
         // </summary>
-        private void Traverse(SIRTreeNode parent, dynamic mark)
+        private void CreateSubtree(SIRTreeNode parent, dynamic mark)
         {
             MarkPanel mp = new MarkPanel(mark);
             SIRTreeNode newNode = new SIRTreeNode(mark, mark.Name, mp);
@@ -71,9 +71,33 @@ namespace SIR_CS
             {
                 foreach (dynamic subtask in mark.Subtasks)
                 {
-                    Traverse(newNode, subtask);
+                    CreateSubtree(newNode, subtask);
                 }
             }
+        }
+
+        private SIRTreeNode FindNodeForMark(SIRTreeNode node, MarkType mark)
+        {
+            // Base case: not there.
+            if (node == null)
+                return null;
+
+            // Base case: item found.
+            if (node.Mark != null && node.Mark.Equals(mark))
+            {
+                return node;
+            }
+
+            // If found in a child node, pass reference up the call chain.
+            foreach (SIRTreeNode child in node.Nodes)
+            {
+                SIRTreeNode foundNode = FindNodeForMark(child, mark);
+                if (foundNode != null)
+                    return foundNode;
+            }
+
+            // Mark was not found in any subtree.
+            return null;
         }
 
 
@@ -107,7 +131,7 @@ namespace SIR_CS
                    MessageBoxIcon.Error);
                 return;
             }
-            serializer.Serialize(writer, myScheme);
+            serializer.Serialize(writer, formScheme);
             writer.Close();
 
             myFileName = newFileName;

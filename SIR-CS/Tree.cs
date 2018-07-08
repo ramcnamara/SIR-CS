@@ -1,13 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using System.Xml.Serialization;
 
 namespace SIR_CS
 {
     public partial class SIRSchemeForm
     {
+        private SIRTreeNode draggedNode = null;
+        private int overUnder;
+        private SIRTreeNode lastOver;
+
 
         private class SIRTreeNode : System.Windows.Forms.TreeNode
         {
@@ -19,7 +23,7 @@ namespace SIR_CS
                 Mark = newMark;
                 Panel = mp;
 
-                Recompute();
+                RefreshNodeStrings();
 
                 // wire up events
                 if (Panel != null && !(Mark is CriterionType))
@@ -31,18 +35,18 @@ namespace SIR_CS
             public void OnChange(object sender, EventArgs e)
             {
                 System.Diagnostics.Debug.WriteLine($"OnChange handler: {Mark.Name}");
-                Recompute();
+                RefreshNodeStrings();
 
                 // if the max mark changed, we need to propagate
                 SIRTreeNode ancestor = Parent as SIRTreeNode;
                 while (ancestor != null)
                 {
-                    ancestor.Recompute();
+                    ancestor.RefreshNodeStrings();
                     ancestor = ancestor.Parent as SIRTreeNode;
                 }
             }
 
-            private void Recompute()
+            private void RefreshNodeStrings()
             {
                 if (Mark == null) return;
                 string desc = "";
@@ -105,48 +109,89 @@ namespace SIR_CS
 
             cardPanel.Controls.Clear();
             cardPanel.Controls.Add(mp);
-            Refresh();
-
-
         }
 
         private void TreeView_ItemDrag(object sender, ItemDragEventArgs e)
         {
             // Drag on left button
             if (e.Button == MouseButtons.Left)
-                DoDragDrop(e.Item, DragDropEffects.Move);
+            {
+                draggedNode = e.Item as SIRTreeNode;
+                System.Diagnostics.Debug.Write("Dragging ");
+                System.Diagnostics.Debug.WriteLine((draggedNode == null) ? "null" : draggedNode.Mark.Name);
+                DoDragDrop(((SIRTreeNode)e.Item).Mark, DragDropEffects.Move | DragDropEffects.Scroll);
+            }
         }
 
         private void TreeView_DragEnter(object sender, DragEventArgs e)
         {
+            // TODO: draw indicator lines for sibling/parent insert.
             e.Effect = e.AllowedEffect;
         }
 
         private void TreeView_DragOver(object sender, DragEventArgs e)
         {
-            // Retrieve the client coordinates of the mouse position.
+            // Find node that the mouse pointer is pointing at.
             Point targetPoint = treeView.PointToClient(new Point(e.X, e.Y));
+            SIRTreeNode targetNode = treeView.GetNodeAt(targetPoint) as SIRTreeNode;
 
-            // Highlight the node at the mouse position, if a suitable drop target.
-            SIRTreeNode dest = treeView.GetNodeAt(targetPoint) as SIRTreeNode;
-            SIRTreeNode payload = (SIRTreeNode)e.Data.GetData(typeof(SIRTreeNode));
-            if (CanDropOn(payload, dest))
+            bool dropOver = false;
+            bool dropUnder = false;
+
+            SIRTreeNode dest = targetNode;
+
+            // Pointing at top or bottom of node?
+            int offsetY = treeView.PointToClient(Cursor.Position).Y - targetNode.Bounds.Top;
+
+            // Can't drop into Criteria, so over or under are the only choices.
+            if (targetNode.Mark is CriterionType && draggedNode.Mark is CriterionType)
             {
-                dest.BackColor = SystemColors.Highlight;
-                dest.ForeColor = SystemColors.HighlightText;
+                if (offsetY < targetNode.Bounds.Height / 2)
+                    dropOver = true;
+                else dropUnder = true;
+
+                dest = (SIRTreeNode)targetNode.Parent;
             }
 
-            // Unhighlight any node we just left
-            if (dest.PrevVisibleNode != null)
+            // We are not over a Criterion.
+            else if (offsetY < targetNode.Bounds.Height / 3)
             {
-                dest.PrevVisibleNode.BackColor = SystemColors.ControlLightLight;
-                dest.PrevVisibleNode.ForeColor = SystemColors.ControlText;
+                dropOver = true;
+                dest = (SIRTreeNode)targetNode.Parent;
+            }
+            else if (offsetY > (targetNode.Bounds.Height * 2) / 3)
+            {
+                dropUnder = true;
+                dest = (SIRTreeNode)targetNode.Parent;
             }
 
-            if (dest.NextVisibleNode != null)
+            int newDrop = 0;
+            if (dropOver) newDrop++;
+            if (dropUnder) newDrop--;
+
+            if (targetNode == lastOver && newDrop == overUnder)
+                return;
+
+            lastOver = targetNode;
+            overUnder = newDrop;
+
+            Refresh();
+
+
+            // Draw the separator
+            if (dropOver)
             {
-                dest.NextVisibleNode.BackColor = SystemColors.ControlLightLight;
-                dest.NextVisibleNode.ForeColor = SystemColors.ControlText;
+                DrawLeafTopPlaceholders(targetNode, CanDropOn(draggedNode, dest));
+            }
+
+            else if (dropUnder)
+            {
+                DrawLeafBottomPlaceholders(targetNode, targetNode.Parent as SIRTreeNode, CanDropOn(draggedNode, dest));
+            }
+
+            else
+            {
+                DrawAddToFolderPlaceholder(targetNode, CanDropOn(draggedNode, dest));
             }
         }
 
@@ -158,8 +203,6 @@ namespace SIR_CS
             // Retrieve the node at the drop location.
             SIRTreeNode targetNode = treeView.GetNodeAt(targetPoint) as SIRTreeNode;
 
-            // Retrieve the node that was dragged.
-            SIRTreeNode draggedNode = (SIRTreeNode)e.Data.GetData(typeof(SIRTreeNode));
 
             // Confirm that the node at the drop location is not 
             // the dragged node or a descendant of the dragged node.
@@ -167,31 +210,87 @@ namespace SIR_CS
             {
                 // If it is a move operation, remove the node from its current 
                 // location and add it to the node at the drop location.
-                if (e.Effect == DragDropEffects.Move)
+                if ((e.Effect | DragDropEffects.Move) == DragDropEffects.Move)
                 {
-                    draggedNode.Remove();
-                    targetNode.Nodes.Add(draggedNode);
+
+                    // The only way the dragged node's parent can be null is if we 
+                    // dragged root, and that's not allowed.
+                    if (!(draggedNode.Parent is SIRTreeNode oldParent))
+                        return;
+
+                    // Are we moving criteria?
+                    if (draggedNode.Mark is CriterionType)
+                    {
+                        InsertIntoCriteria(draggedNode.Mark as CriterionType, targetNode.Mark, 0);
+                        DeleteCriterion(draggedNode.Mark as CriterionType, oldParent.Mark);
+                        // TODO: recreate old parent
+                        // TODO: recreate targetNode
+                        return;
+                    }
+
+                    // Are we dragging to the root?
+                    if (oldParent == treeView.Nodes[0])
+                    {
+                        List<MarkType> tasks = formScheme.Tasks.ToList();
+                        tasks.Insert(0, draggedNode.Mark);
+                        // TODO: recreate entire tree
+                        return;
+                    }
+
+                    // We are dragging a numeric or qualitative task to a subtask position.
+                    InsertIntoSubtask(draggedNode.Mark, targetNode.Mark, 0);
+                    DeleteSubtask(draggedNode.Mark, oldParent.Mark);
+
+                    // TODO: recreate old parent
+                    // TODO: recreate 
                 }
 
-                // If it is a copy operation, clone the dragged node 
-                // and add it to the node at the drop location.
-                else if (e.Effect == DragDropEffects.Copy)
-                {
-                    targetNode.Nodes.Add((TreeNode)draggedNode.Clone());
-                }
-
-                // Expand the node at the location 
-                // to show the dropped node.
-                targetNode.Expand();
             }
         }
+
+        #region Methods for manipulating model classes to achieve drag and drop reordering
+        private void DeleteCriterion(CriterionType c, dynamic mark)
+        {
+            List<CriterionType> criteria = mark.Criteria.ToList();
+            criteria.Remove(c);
+            mark.Criteria = criteria.ToArray();
+        }
+
+        private void InsertIntoCriteria(CriterionType c, dynamic mark, int pos)
+        {
+            List<CriterionType> criteria = mark.Criteria.ToList();
+            criteria.Insert(pos, c);
+            mark.Criteria = criteria.ToArray();
+        }
+
+        private void DeleteSubtask(MarkType m, dynamic mark)
+        {
+            List<MarkType> marks = mark.Subtasks.ToList();
+            marks.Remove(m);
+            mark.Subtasks = marks.ToArray();
+        }
+
+        private void InsertIntoSubtask(MarkType m, dynamic mark, int pos)
+        {
+            List<MarkType> marks = mark.Subtasks.ToList();
+            marks.Insert(pos, m);
+            mark.Tasks = marks.ToArray();
+        }
+        #endregion
+   
+
 
         // Can node1 be dropped onto node2?
         private bool CanDropOn(SIRTreeNode node1, SIRTreeNode node2)
         {
+          
+            if (node1 == null || node2 == null)
+            {
+                return false;
+            }
 
             // Only Criteria can't be dropped on the root
-            if (node2 == treeView.Nodes[0])
+            if (node2 == treeView.Nodes[0]) 
                 return !(node1.Mark is CriterionType);
 
             // Nothing can be dropped on Criteria
@@ -206,6 +305,119 @@ namespace SIR_CS
             // recurse.
             return CanDropOn(node1, node2.Parent as SIRTreeNode);
         }
+
+        #region Methods for drawing images on treeView
+        private void DrawLeafTopPlaceholders(SIRTreeNode NodeOver, bool possible)
+        {
+            Graphics g = this.treeView.CreateGraphics();
+
+            Color color = possible ? Color.Black : Color.Gray;
+            int NodeOverImageWidth = 0;// this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
+            int LeftPos = NodeOver.Bounds.Left - NodeOverImageWidth;
+            int RightPos = this.treeView.Width - 4;
+
+            Point[] LeftTriangle = new Point[5]{
+                                                   new Point(LeftPos, NodeOver.Bounds.Top - 4),
+                                                   new Point(LeftPos, NodeOver.Bounds.Top + 4),
+                                                   new Point(LeftPos + 4, NodeOver.Bounds.Y),
+                                                   new Point(LeftPos + 4, NodeOver.Bounds.Top - 1),
+                                                   new Point(LeftPos, NodeOver.Bounds.Top - 5)};
+
+            Point[] RightTriangle = new Point[5]{
+                                                    new Point(RightPos, NodeOver.Bounds.Top - 4),
+                                                    new Point(RightPos, NodeOver.Bounds.Top + 4),
+                                                    new Point(RightPos - 4, NodeOver.Bounds.Y),
+                                                    new Point(RightPos - 4, NodeOver.Bounds.Top - 1),
+                                                    new Point(RightPos, NodeOver.Bounds.Top - 5)};
+
+
+            g.FillPolygon(System.Drawing.Brushes.Black, LeftTriangle);
+            g.FillPolygon(System.Drawing.Brushes.Black, RightTriangle);
+            g.DrawLine(new System.Drawing.Pen(Color.Black, 2), new Point(LeftPos, NodeOver.Bounds.Top), new Point(RightPos, NodeOver.Bounds.Top));
+
+        }//eom
+
+        private void DrawLeafBottomPlaceholders(SIRTreeNode NodeOver, SIRTreeNode ParentDragDrop, bool possible)
+        {
+            Graphics g = this.treeView.CreateGraphics();
+
+            int NodeOverImageWidth = 0; //this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
+            // Once again, we are not dragging to node over, draw the placeholder using the ParentDragDrop bounds
+            int LeftPos, RightPos;
+            if (ParentDragDrop != null)
+                LeftPos = ParentDragDrop.Bounds.Left - 8;// (this.treeView.ImageList.Images[ParentDragDrop.ImageIndex].Size.Width + 8);
+            else
+                LeftPos = NodeOver.Bounds.Left - NodeOverImageWidth;
+            RightPos = this.treeView.Width - 4;
+            Color color = possible ? Color.Black : Color.Gray;
+
+            Point[] LeftTriangle = new Point[5]{
+                                                   new Point(LeftPos, NodeOver.Bounds.Bottom - 4),
+                                                   new Point(LeftPos, NodeOver.Bounds.Bottom + 4),
+                                                   new Point(LeftPos + 4, NodeOver.Bounds.Bottom),
+                                                   new Point(LeftPos + 4, NodeOver.Bounds.Bottom - 1),
+                                                   new Point(LeftPos, NodeOver.Bounds.Bottom - 5)};
+
+            Point[] RightTriangle = new Point[5]{
+                                                    new Point(RightPos, NodeOver.Bounds.Bottom - 4),
+                                                    new Point(RightPos, NodeOver.Bounds.Bottom + 4),
+                                                    new Point(RightPos - 4, NodeOver.Bounds.Bottom),
+                                                    new Point(RightPos - 4, NodeOver.Bounds.Bottom - 1),
+                                                    new Point(RightPos, NodeOver.Bounds.Bottom - 5)};
+
+
+            g.FillPolygon(System.Drawing.Brushes.Black, LeftTriangle);
+            g.FillPolygon(System.Drawing.Brushes.Black, RightTriangle);
+            g.DrawLine(new System.Drawing.Pen(Color.Black, 2), new Point(LeftPos, NodeOver.Bounds.Bottom), new Point(RightPos, NodeOver.Bounds.Bottom));
+        }//eom
+
+        private void DrawFolderTopPlaceholders(SIRTreeNode NodeOver, bool possible)
+        {
+            Graphics g = this.treeView.CreateGraphics();
+            int NodeOverImageWidth = 0;// this.treeView.ImageList.Images[NodeOver.ImageIndex].Size.Width + 8;
+
+            int LeftPos, RightPos;
+            LeftPos = NodeOver.Bounds.Left - NodeOverImageWidth;
+            RightPos = this.treeView.Width - 4;
+            Color color = possible ? Color.Black : Color.Gray;
+
+            Point[] LeftTriangle = new Point[5]{
+                                                   new Point(LeftPos, NodeOver.Bounds.Top - 4),
+                                                   new Point(LeftPos, NodeOver.Bounds.Top + 4),
+                                                   new Point(LeftPos + 4, NodeOver.Bounds.Y),
+                                                   new Point(LeftPos + 4, NodeOver.Bounds.Top - 1),
+                                                   new Point(LeftPos, NodeOver.Bounds.Top - 5)};
+
+            Point[] RightTriangle = new Point[5]{
+                                                    new Point(RightPos, NodeOver.Bounds.Top - 4),
+                                                    new Point(RightPos, NodeOver.Bounds.Top + 4),
+                                                    new Point(RightPos - 4, NodeOver.Bounds.Y),
+                                                    new Point(RightPos - 4, NodeOver.Bounds.Top - 1),
+                                                    new Point(RightPos, NodeOver.Bounds.Top - 5)};
+
+
+            g.FillPolygon(System.Drawing.Brushes.Black, LeftTriangle);
+            g.FillPolygon(System.Drawing.Brushes.Black, RightTriangle);
+            g.DrawLine(new System.Drawing.Pen(Color.Black, 2), new Point(LeftPos, NodeOver.Bounds.Top), new Point(RightPos, NodeOver.Bounds.Top));
+
+        }//eom
+        private void DrawAddToFolderPlaceholder(SIRTreeNode NodeOver, bool possible)
+        {
+            Graphics g = treeView.CreateGraphics();
+            int RightPos = NodeOver.Bounds.Right + 6;
+            Color color = possible ? Color.Black : Color.Gray;
+            Point[] RightTriangle = new Point[5]{
+                                                    new Point(RightPos, NodeOver.Bounds.Y + (NodeOver.Bounds.Height / 2) + 4),
+                                                    new Point(RightPos, NodeOver.Bounds.Y + (NodeOver.Bounds.Height / 2) + 4),
+                                                    new Point(RightPos - 4, NodeOver.Bounds.Y + (NodeOver.Bounds.Height / 2)),
+                                                    new Point(RightPos - 4, NodeOver.Bounds.Y + (NodeOver.Bounds.Height / 2) - 1),
+                                                    new Point(RightPos, NodeOver.Bounds.Y + (NodeOver.Bounds.Height / 2) - 5)};
+
+
+            g.FillPolygon(System.Drawing.Brushes.Black, RightTriangle);
+        }//eom
+
+        #endregion
     }
 }
 
