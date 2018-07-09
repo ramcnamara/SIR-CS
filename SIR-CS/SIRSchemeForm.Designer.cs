@@ -33,7 +33,6 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.treeView = new System.Windows.Forms.TreeView();
             this.treeIcons = new System.Windows.Forms.ImageList(this.components);
-            this.nodeSeparator = new System.Windows.Forms.Label();
             this.cardPanel = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.preambleBox = new System.Windows.Forms.RichTextBox();
@@ -63,7 +62,6 @@
             // 
             // splitContainer1.Panel2
             // 
-            this.splitContainer1.Panel2.Controls.Add(this.nodeSeparator);
             this.splitContainer1.Panel2.Controls.Add(this.cardPanel);
             this.splitContainer1.Panel2.Controls.Add(this.groupBox1);
             this.splitContainer1.Panel2.Controls.Add(this.activityNameBox);
@@ -101,18 +99,7 @@
             this.treeIcons.Images.SetKeyName(4, "Individual-bonus.bmp");
             this.treeIcons.Images.SetKeyName(5, "Individual-penalty.bmp");
             this.treeIcons.Images.SetKeyName(6, "CheckBox_16x_24.bmp");
-            // 
-            // nodeSeparator
-            // 
-            this.nodeSeparator.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
-            this.nodeSeparator.AutoSize = true;
-            this.nodeSeparator.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.nodeSeparator.Font = new System.Drawing.Font("Microsoft Sans Serif", 2F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Pixel, ((byte)(0)));
-            this.nodeSeparator.Location = new System.Drawing.Point(250, 20);
-            this.nodeSeparator.Name = "nodeSeparator";
-            this.nodeSeparator.Size = new System.Drawing.Size(2, 4);
-            this.nodeSeparator.TabIndex = 7;
-            this.nodeSeparator.Visible = false;
+            this.treeIcons.Images.SetKeyName(7, "AbstractCube_16x.png");
             // 
             // cardPanel
             // 
@@ -249,7 +236,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox subtitleBox;
         private System.Windows.Forms.Panel cardPanel;
-        private System.Windows.Forms.Label nodeSeparator;
         private System.Windows.Forms.ImageList treeIcons;
     }
 }

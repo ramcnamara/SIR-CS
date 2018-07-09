@@ -63,7 +63,7 @@ namespace SIR_CS
                     desc = "(qualitative) ";
                 else if (Mark is NumericType)
                 {
-                    desc = $"({((NumericType)Mark).GetTotalMaxMark()} marks) ";
+                    desc = $"({(Mark as NumericType).GetTotalMaxMark()} marks) ";
                 }
 
 
@@ -75,7 +75,7 @@ namespace SIR_CS
                 if (Mark is NumericType task)
                 {
 
-                    if (task.bonusSpecified && task.bonus)
+                    if (task.bonus)
                     {
                         if (flags == "")
                             flags = "(bonus";
@@ -83,7 +83,7 @@ namespace SIR_CS
                         bonus = true;
                     }
 
-                    if (task.penaltySpecified && task.penalty)
+                    if (task.penalty)
                     {
                         if (flags == "")
                             flags = "(penalty";
@@ -140,25 +140,26 @@ namespace SIR_CS
             cardPanel.Controls.Clear();
             cardPanel.Controls.Add(mp);
         }
-
-
-
-        public partial class NumericType
-        {
-            public decimal GetTotalMaxMark()
-            {
-                if (subtasksField == null || subtasksField.Length == 0)
-                    return maxMark;
-
-                decimal totalMaxMark = 0;
-                foreach (NumericType task in subtasksField.Where(st => st is NumericType))
-                {
-                    if (bonus == task.bonus && penalty == task.penalty)
-                        totalMaxMark += task.GetTotalMaxMark();
-                }
-
-                return totalMaxMark;
-            }
-        }
     }
 }
+
+
+
+public partial class NumericType : MarkType
+{
+    public decimal GetTotalMaxMark()
+    {
+        if (subtasksField == null || subtasksField.Length == 0)
+            return maxMark;
+
+        decimal totalMaxMark = 0;
+        foreach (NumericType task in subtasksField.Where(st => st is NumericType))
+        {
+            if (bonus == task.bonus && penalty == task.penalty)
+                totalMaxMark += task.GetTotalMaxMark();
+        }
+
+        return totalMaxMark;
+    }
+}
+

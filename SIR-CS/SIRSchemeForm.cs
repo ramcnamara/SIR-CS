@@ -32,7 +32,10 @@ namespace SIR_CS
 
             // populate tree selector
             // WinForms TreeViews don't do databinding so this must be done by hand
-            SIRTreeNode rootNode = new SIRTreeNode(null, formScheme.ActivityName, null);
+            SIRTreeNode rootNode = new SIRTreeNode(null, formScheme.ActivityName, null)
+            {
+                ImageIndex = 7
+            };
             treeView.Nodes.Add(rootNode);
             if (formScheme.Tasks != null)
                 foreach (var task in formScheme.Tasks)
