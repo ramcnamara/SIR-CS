@@ -123,28 +123,40 @@ namespace SIR_CS
 
             // Retrieve the node at the drop location.
             SIRTreeNode targetNode = treeView.GetNodeAt(targetPoint) as SIRTreeNode;
+
+            // Where should the drop go?
             SIRTreeNode dest = targetNode;
-            int pos;
+            int pos = 0;
 
             // Check for dropping over/under the node.
             if (targetNode != treeView.Nodes[0])
             {
                 if (overUnder < 0)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Inserting before {targetNode?.Mark?.Name}");
+                    dest = dest.Parent as SIRTreeNode;
+                    pos = targetNode.Index;
+                    System.Diagnostics.Debug.WriteLine($"Inserting before {targetNode?.Mark?.Name} (into) {dest?.Mark?.Name}; pos = {pos}");
                 }
                 else if (overUnder > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Inserting after {targetNode?.Mark?.Name}");
+                    dest = dest.Parent as SIRTreeNode;
+                    pos = targetNode.Index + 1;
+                    System.Diagnostics.Debug.WriteLine($"Inserting after {targetNode?.Mark?.Name} (into) {dest?.Mark?.Name}; pos = {pos}");
                 }
                 else
-                    System.Diagnostics.Debug.WriteLine($"Dropping into {targetNode.Mark.Name}");
+                {
+                    pos = targetNode.Nodes.Count;
+                    System.Diagnostics.Debug.WriteLine($"Dropping into {targetNode.Mark.Name}; pos = {pos}");
+                }
+
             }
             else
             {
                 System.Diagnostics.Debug.WriteLine($"Dropping into root");
+                dest = treeView.Nodes[0] as SIRTreeNode;
+                pos = treeView.Nodes.Count;
+
             }
-                
 
 
             // Confirm that the node at the drop location is not 
@@ -169,7 +181,7 @@ namespace SIR_CS
                     if (draggedNode.Mark is CriterionType)
                     {
                         System.Diagnostics.Debug.WriteLine($"{draggedNode.Mark.Name} is a Criterion");
-                        InsertIntoCriteria(draggedNode.Mark as CriterionType, targetNode.Mark, 0);
+                        InsertIntoCriteria(draggedNode.Mark as CriterionType, dest.Mark, pos);
                         DeleteCriterion(draggedNode.Mark as CriterionType, oldParent.Mark);
                         // rebuild tree
                         treeView.Nodes[0].Nodes.Clear();
@@ -178,15 +190,16 @@ namespace SIR_CS
                             {
                                 CreateSubtree((SIRTreeNode)treeView.Nodes[0], task);
                             }
+                        treeView.ExpandAll();
                         return;
                     }
 
                     // Are we dragging to the root?
-                    if (targetNode == treeView.Nodes[0])
+                    if (dest == treeView.Nodes[0])
                     {
                         System.Diagnostics.Debug.WriteLine($"Dragging to root");
                         List<MarkType> tasks = formScheme.Tasks.ToList();
-                        tasks.Insert(0, draggedNode.Mark);
+                        tasks.Insert(pos, draggedNode.Mark);
 
                         // rebuild tree
                         treeView.Nodes[0].Nodes.Clear();
@@ -195,11 +208,13 @@ namespace SIR_CS
                             {
                                 CreateSubtree((SIRTreeNode)treeView.Nodes[0], task);
                             }
+                        treeView.ExpandAll();
                         return;
                     }
 
                     // We are dragging a numeric or qualitative task to a subtask position.
-                    InsertIntoSubtask(draggedNode.Mark, targetNode.Mark, 0);
+                    System.Diagnostics.Debug.WriteLine("Dragging to subtask position");
+                    InsertIntoSubtask(draggedNode.Mark, dest.Mark, pos);
                     DeleteSubtask(draggedNode.Mark, oldParent.Mark);
 
                     // rebuild tree
@@ -209,6 +224,7 @@ namespace SIR_CS
                         {
                             CreateSubtree((SIRTreeNode)treeView.Nodes[0], task);
                         }
+                    treeView.ExpandAll();
                     return;
                 }
 
@@ -220,7 +236,7 @@ namespace SIR_CS
         private void DeleteCriterion(CriterionType c, dynamic mark)
         {
             if (mark.Criteria == null) return;
-            List<CriterionType> criteria = mark.Criteria.ToList();
+            List<CriterionType> criteria = new List<CriterionType>(mark.Criteria);
             criteria.Remove(c);
             mark.Criteria = criteria.ToArray();
         }
@@ -229,7 +245,7 @@ namespace SIR_CS
         {
             if (mark.Criteria == null)
                 mark.Criteria = new CriterionType[] { c };
-            List<CriterionType> criteria = mark.Criteria.ToList();
+            List<CriterionType> criteria = new List<CriterionType>(mark.Criteria);
             criteria.Insert(pos, c);
             mark.Criteria = criteria.ToArray();
         }
