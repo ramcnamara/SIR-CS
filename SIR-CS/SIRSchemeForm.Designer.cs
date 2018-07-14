@@ -28,8 +28,11 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SIRSchemeForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.treeView = new System.Windows.Forms.TreeView();
+            this.treeIcons = new System.Windows.Forms.ImageList(this.components);
             this.cardPanel = new System.Windows.Forms.Panel();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.preambleBox = new System.Windows.Forms.RichTextBox();
@@ -65,6 +68,7 @@
             this.splitContainer1.Panel2.Controls.Add(this.unitCodeBox);
             this.splitContainer1.Panel2.Controls.Add(this.label2);
             this.splitContainer1.Panel2.Controls.Add(this.label1);
+            this.splitContainer1.Panel2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.splitContainer1.Size = new System.Drawing.Size(978, 555);
             this.splitContainer1.SplitterDistance = 324;
             this.splitContainer1.TabIndex = 0;
@@ -75,11 +79,27 @@
             this.treeView.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.treeView.ImageIndex = 0;
+            this.treeView.ImageList = this.treeIcons;
             this.treeView.Location = new System.Drawing.Point(6, 6);
             this.treeView.Name = "treeView";
+            this.treeView.SelectedImageIndex = 0;
             this.treeView.Size = new System.Drawing.Size(286, 548);
             this.treeView.TabIndex = 0;
             this.treeView.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.TreeView_AfterSelect);
+            // 
+            // treeIcons
+            // 
+            this.treeIcons.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("treeIcons.ImageStream")));
+            this.treeIcons.TransparentColor = System.Drawing.Color.Transparent;
+            this.treeIcons.Images.SetKeyName(0, "group.bmp");
+            this.treeIcons.Images.SetKeyName(1, "group-bonus.bmp");
+            this.treeIcons.Images.SetKeyName(2, "group-penalty.bmp");
+            this.treeIcons.Images.SetKeyName(3, "Individual.bmp");
+            this.treeIcons.Images.SetKeyName(4, "Individual-bonus.bmp");
+            this.treeIcons.Images.SetKeyName(5, "Individual-penalty.bmp");
+            this.treeIcons.Images.SetKeyName(6, "CheckBox_16x_24.bmp");
+            this.treeIcons.Images.SetKeyName(7, "AbstractCube_16x.png");
             // 
             // cardPanel
             // 
@@ -143,7 +163,7 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.subtitleBox.Location = new System.Drawing.Point(94, 16);
             this.subtitleBox.Name = "subtitleBox";
-            this.subtitleBox.Size = new System.Drawing.Size(511, 20);
+            this.subtitleBox.Size = new System.Drawing.Size(511, 22);
             this.subtitleBox.TabIndex = 0;
             // 
             // activityNameBox
@@ -152,14 +172,14 @@
             | System.Windows.Forms.AnchorStyles.Right)));
             this.activityNameBox.Location = new System.Drawing.Point(102, 34);
             this.activityNameBox.Name = "activityNameBox";
-            this.activityNameBox.Size = new System.Drawing.Size(511, 20);
+            this.activityNameBox.Size = new System.Drawing.Size(511, 22);
             this.activityNameBox.TabIndex = 3;
             // 
             // unitCodeBox
             // 
             this.unitCodeBox.Location = new System.Drawing.Point(102, 9);
             this.unitCodeBox.Name = "unitCodeBox";
-            this.unitCodeBox.Size = new System.Drawing.Size(108, 20);
+            this.unitCodeBox.Size = new System.Drawing.Size(108, 22);
             this.unitCodeBox.TabIndex = 2;
             // 
             // label2
@@ -216,5 +236,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.TextBox subtitleBox;
         private System.Windows.Forms.Panel cardPanel;
+        private System.Windows.Forms.ImageList treeIcons;
     }
 }
