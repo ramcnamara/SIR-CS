@@ -131,31 +131,39 @@ namespace SIR_CS
             // Check for dropping over/under the node.
             if (targetNode != treeView.Nodes[0])
             {
+                if (overUnder == 0)
+                {
+                    // Inserting into a node.  
+
+                }
                 if (overUnder < 0)
                 {
                     dest = dest.Parent as SIRTreeNode;
                     pos = targetNode.Index;
-                    System.Diagnostics.Debug.WriteLine($"Inserting before {targetNode?.Mark?.Name} (into) {dest?.Mark?.Name}; pos = {pos}");
+                    if (!(draggedNode.Mark is CriterionType))
+                        pos -= dest.Mark.CriterionCount();
+                        
+                    System.Diagnostics.Debug.WriteLine($"Inserting before {targetNode?.Mark?.Name} (into {dest?.Mark?.Name}); pos = {pos}");
                 }
                 else if (overUnder > 0)
                 {
                     dest = dest.Parent as SIRTreeNode;
                     pos = targetNode.Index + 1;
-                    System.Diagnostics.Debug.WriteLine($"Inserting after {targetNode?.Mark?.Name} (into) {dest?.Mark?.Name}; pos = {pos}");
+                    if (!(draggedNode.Mark is CriterionType) && dest != null)
+                        pos -= dest.Mark.CriterionCount();
+                    System.Diagnostics.Debug.WriteLine($"Inserting after {targetNode?.Mark?.Name} (into {dest?.Mark?.Name}); pos = {pos}");
                 }
                 else
                 {
-                    pos = targetNode.Nodes.Count;
-                    System.Diagnostics.Debug.WriteLine($"Dropping into {targetNode.Mark.Name}; pos = {pos}");
+                    System.Diagnostics.Debug.WriteLine($"Dropping onto {targetNode.Mark.Name}; pos = {pos}");
                 }
 
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"Dropping into root");
+                System.Diagnostics.Debug.WriteLine($"Dropping onto root");
                 dest = treeView.Nodes[0] as SIRTreeNode;
-                pos = treeView.Nodes.Count;
-
+                pos = formScheme.Tasks.Length;
             }
 
 
@@ -164,14 +172,13 @@ namespace SIR_CS
             if (!draggedNode.Equals(targetNode) && CanDropOn(draggedNode, targetNode))
             {
                 System.Diagnostics.Debug.WriteLine("Can drop");
-                // If it is a move operation, remove the node from its current 
-                // location and add it to the node at the drop location.
+                
                 if ((e.Effect | DragDropEffects.Move) == DragDropEffects.Move)
                 {
-
+                    SIRTreeNode oldParent = draggedNode.Parent as SIRTreeNode;
                     // The only way the dragged node's parent can be null is if we 
                     // dragged root, and that's not allowed.
-                    if (!(draggedNode.Parent is SIRTreeNode oldParent))
+                    if (oldParent == null)
                     {
                         System.Diagnostics.Debug.WriteLine("Can't drag root");
                         return;
@@ -200,6 +207,8 @@ namespace SIR_CS
                         System.Diagnostics.Debug.WriteLine($"Dragging to root");
                         List<MarkType> tasks = formScheme.Tasks.ToList();
                         tasks.Insert(pos, draggedNode.Mark);
+                        System.Diagnostics.Debug.WriteLine($"Deleting {draggedNode?.Mark?.Name} from {oldParent?.Mark?.Name}");
+                        DeleteSubtask(oldParent.Mark, draggedNode.Mark);
 
                         // rebuild tree
                         treeView.Nodes[0].Nodes.Clear();
@@ -253,6 +262,7 @@ namespace SIR_CS
         private void DeleteSubtask(MarkType m, dynamic mark)
         {
             List<MarkType> marks;
+            System.Diagnostics.Debug.WriteLine($"Deleting {mark?.Name} from {m?.Name}");
             if (mark == null)
             {
                 // We are deleting a Task rather than a Subtask.
@@ -261,9 +271,12 @@ namespace SIR_CS
                 formScheme.Tasks = marks.ToArray();
                 return;
             }
-            marks = new List<MarkType>(mark.Subtasks);
-            marks.Remove(m);
-            mark.Subtasks = marks.ToArray();
+            if (mark.Subtasks != null)
+            {
+                marks = new List<MarkType>(mark.Subtasks);
+                marks.Remove(m);
+                mark.Subtasks = marks.ToArray();
+            }
         }
 
         private void InsertIntoSubtask(MarkType m, dynamic mark, int pos)
@@ -272,14 +285,19 @@ namespace SIR_CS
             {
                 System.Diagnostics.Debug.WriteLine("Hang on, why is mark null in InsertIntoSubtask?");
             }
+
+            System.Diagnostics.Debug.WriteLine($"Inserting {m.Name} into {mark.Name} at position {pos}");
+
             if (mark.Subtasks == null)
             {
                 mark.Subtasks = new MarkType[] { m };
             }
-            System.Diagnostics.Debug.WriteLine($"Inserting {m.Name} into {mark.Name} at position {pos}");
-            List<MarkType> marks = new List<MarkType>(mark.Subtasks);
-            marks.Insert(pos, m);
-            mark.Subtasks = marks.ToArray();
+            else
+            {
+                List<MarkType> marks = new List<MarkType>(mark.Subtasks);
+                marks.Insert(pos, m);
+                mark.Subtasks = marks.ToArray();
+            }
         }
         #endregion
 
@@ -417,4 +435,24 @@ namespace SIR_CS
 
         #endregion
     }
+}
+
+public abstract partial class MarkType
+{
+    public abstract int CriterionCount();
+}
+
+public partial class NumericType
+{
+    public override int CriterionCount() => Criteria.Length;
+}
+
+public partial class QualitativeType
+{
+    public override int CriterionCount() => Criteria.Length;
+}
+
+public partial class CriterionType
+{
+    public override int CriterionCount() => 0;
 }
