@@ -5,8 +5,6 @@ VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SIR-CS", "SIR-CS\SIR-CS.csproj", "{3F4CAD2E-0768-4582-A156-CB1C02C0C9C5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Expander", "Expander\Expander.csproj", "{6C1E8484-D499-47C6-833B-BFB05413AC3B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,9 +15,6 @@ Global
 		{3F4CAD2E-0768-4582-A156-CB1C02C0C9C5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F4CAD2E-0768-4582-A156-CB1C02C0C9C5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F4CAD2E-0768-4582-A156-CB1C02C0C9C5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6C1E8484-D499-47C6-833B-BFB05413AC3B}.Debug|Any CPU.ActiveCfg = Release|Any CPU
-		{6C1E8484-D499-47C6-833B-BFB05413AC3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6C1E8484-D499-47C6-833B-BFB05413AC3B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

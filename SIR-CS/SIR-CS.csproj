@@ -105,12 +105,6 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Expander\Expander.csproj">
-      <Project>{6C1E8484-D499-47C6-833B-BFB05413AC3B}</Project>
-      <Name>Expander</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="SaveAll_16x.svg" />
     <Content Include="Save_16x.svg" />
   </ItemGroup>
