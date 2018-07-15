@@ -1,13 +1,17 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using System.Xml.Serialization;
 
 namespace SIR_CS
 {
     public partial class SIRSchemeForm
     {
+        private SIRTreeNode draggedNode = null;
+        private int overUnder;
+        private SIRTreeNode lastOver;
+
 
         private class SIRTreeNode : System.Windows.Forms.TreeNode
         {
@@ -19,7 +23,7 @@ namespace SIR_CS
                 Mark = newMark;
                 Panel = mp;
 
-                Recompute();
+                RefreshNodeDisplay();
 
                 // wire up events
                 if (Panel != null && !(Mark is CriterionType))
@@ -31,54 +35,60 @@ namespace SIR_CS
             public void OnChange(object sender, EventArgs e)
             {
                 System.Diagnostics.Debug.WriteLine($"OnChange handler: {Mark.Name}");
-                Recompute();
+                RefreshNodeDisplay();
 
                 // if the max mark changed, we need to propagate
                 SIRTreeNode ancestor = Parent as SIRTreeNode;
                 while (ancestor != null)
                 {
-                    ancestor.Recompute();
+                    ancestor.RefreshNodeDisplay();
                     ancestor = ancestor.Parent as SIRTreeNode;
                 }
             }
 
-            private void Recompute()
+            private void RefreshNodeDisplay()
             {
+                bool bonus = false;
+                bool penalty = false;
                 if (Mark == null) return;
                 string desc = "";
                 if (Mark is CriterionType)
                 {
                     Text = Mark.Name;
+                    ImageIndex = 6;
+                    SelectedImageIndex = 6;
                     return;
                 }
                 if (Mark is QualitativeType)
                     desc = "(qualitative) ";
                 else if (Mark is NumericType)
                 {
-                    // TODO: scrape from 
-                    desc = $"({((NumericType)Mark).GetTotalMaxMark()} marks) ";
+                    desc = $"({(Mark as NumericType).GetTotalMaxMark()} marks) ";
                 }
+
 
                 desc += Panel.GetTaskName();
 
                 // handle flags
-                string flags = Mark.group ? "(group" : ""; ;
+                string flags = (Mark.groupSpecified && Mark.group) ? "(group" : ""; ;
 
                 if (Mark is NumericType task)
                 {
 
-                    if (task.bonusSpecified && task.bonus)
+                    if (task.bonus)
                     {
                         if (flags == "")
                             flags = "(bonus";
                         else flags = "group, bonus";
+                        bonus = true;
                     }
 
-                    if (task.penaltySpecified && task.penalty)
+                    if (task.penalty)
                     {
                         if (flags == "")
                             flags = "(penalty";
                         else flags += ", penalty";
+                        penalty = true;
                     }
 
                     if (flags != "")
@@ -86,6 +96,30 @@ namespace SIR_CS
                 }
 
                 Text = $"{desc} {flags}";
+
+                // Set the image icon.
+                if (Mark is CriterionType)
+                {
+                    System.Diagnostics.Debug.WriteLine($"{Mark.Name} is a Criterion");
+                    ImageIndex = 6;
+                }
+                else if (Mark.groupSpecified && Mark.group)
+                {
+                    if (bonus)
+                        ImageIndex = 1;
+                    else if (penalty)
+                        ImageIndex = 2;
+                    else
+                        ImageIndex = 0;
+                }
+                else if (bonus)
+                    ImageIndex = 4;
+                else if (penalty)
+                    ImageIndex = 5;
+                else
+                    ImageIndex = 3;
+
+                SelectedImageIndex = ImageIndex;
             }
         }
 
@@ -105,111 +139,13 @@ namespace SIR_CS
 
             cardPanel.Controls.Clear();
             cardPanel.Controls.Add(mp);
-            Refresh();
-
-
-        }
-
-        private void TreeView_ItemDrag(object sender, ItemDragEventArgs e)
-        {
-            // Drag on left button
-            if (e.Button == MouseButtons.Left)
-                DoDragDrop(e.Item, DragDropEffects.Move);
-        }
-
-        private void TreeView_DragEnter(object sender, DragEventArgs e)
-        {
-            e.Effect = e.AllowedEffect;
-        }
-
-        private void TreeView_DragOver(object sender, DragEventArgs e)
-        {
-            // Retrieve the client coordinates of the mouse position.
-            Point targetPoint = treeView.PointToClient(new Point(e.X, e.Y));
-
-            // Highlight the node at the mouse position, if a suitable drop target.
-            SIRTreeNode dest = treeView.GetNodeAt(targetPoint) as SIRTreeNode;
-            SIRTreeNode payload = (SIRTreeNode)e.Data.GetData(typeof(SIRTreeNode));
-            if (CanDropOn(payload, dest))
-            {
-                dest.BackColor = SystemColors.Highlight;
-                dest.ForeColor = SystemColors.HighlightText;
-            }
-
-            // Unhighlight any node we just left
-            if (dest.PrevVisibleNode != null)
-            {
-                dest.PrevVisibleNode.BackColor = SystemColors.ControlLightLight;
-                dest.PrevVisibleNode.ForeColor = SystemColors.ControlText;
-            }
-
-            if (dest.NextVisibleNode != null)
-            {
-                dest.NextVisibleNode.BackColor = SystemColors.ControlLightLight;
-                dest.NextVisibleNode.ForeColor = SystemColors.ControlText;
-            }
-        }
-
-        private void TreeView_DragDrop(object sender, DragEventArgs e)
-        {
-            // Retrieve the client coordinates of the drop location.
-            Point targetPoint = treeView.PointToClient(new Point(e.X, e.Y));
-
-            // Retrieve the node at the drop location.
-            SIRTreeNode targetNode = treeView.GetNodeAt(targetPoint) as SIRTreeNode;
-
-            // Retrieve the node that was dragged.
-            SIRTreeNode draggedNode = (SIRTreeNode)e.Data.GetData(typeof(SIRTreeNode));
-
-            // Confirm that the node at the drop location is not 
-            // the dragged node or a descendant of the dragged node.
-            if (!draggedNode.Equals(targetNode) && CanDropOn(draggedNode, targetNode))
-            {
-                // If it is a move operation, remove the node from its current 
-                // location and add it to the node at the drop location.
-                if (e.Effect == DragDropEffects.Move)
-                {
-                    draggedNode.Remove();
-                    targetNode.Nodes.Add(draggedNode);
-                }
-
-                // If it is a copy operation, clone the dragged node 
-                // and add it to the node at the drop location.
-                else if (e.Effect == DragDropEffects.Copy)
-                {
-                    targetNode.Nodes.Add((TreeNode)draggedNode.Clone());
-                }
-
-                // Expand the node at the location 
-                // to show the dropped node.
-                targetNode.Expand();
-            }
-        }
-
-        // Can node1 be dropped onto node2?
-        private bool CanDropOn(SIRTreeNode node1, SIRTreeNode node2)
-        {
-
-            // Only Criteria can't be dropped on the root
-            if (node2 == treeView.Nodes[0])
-                return !(node1.Mark is CriterionType);
-
-            // Nothing can be dropped on Criteria
-            if (node2.Mark is CriterionType)
-                return false;
-
-            // Otherwise, check for identity or  parent relationships
-            if (node2.Parent == null) return true;
-            if (node2.Parent.Equals(node1)) return false;
-
-            // If the parent node is not null or equal to the first node, 
-            // recurse.
-            return CanDropOn(node1, node2.Parent as SIRTreeNode);
         }
     }
 }
 
-public partial class NumericType
+
+
+public partial class NumericType : MarkType
 {
     public decimal GetTotalMaxMark()
     {
@@ -226,3 +162,4 @@ public partial class NumericType
         return totalMaxMark;
     }
 }
+
