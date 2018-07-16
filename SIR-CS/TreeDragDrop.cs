@@ -174,10 +174,9 @@ namespace SIR_CS
                 
                 if ((e.Effect | DragDropEffects.Move) == DragDropEffects.Move)
                 {
-                    SIRTreeNode oldParent = draggedNode.Parent as SIRTreeNode;
                     // The only way the dragged node's parent can be null is if we 
                     // dragged root, and that's not allowed.
-                    if (oldParent == null)
+                    if (!(draggedNode.Parent is SIRTreeNode oldParent))
                     {
                         System.Diagnostics.Debug.WriteLine("Can't drag root");
                         return;
@@ -204,11 +203,16 @@ namespace SIR_CS
                     // Are we dragging to the root?
                     if (dest == treeView.Nodes[0])
                     {
+                        // Correct for dragging a top-level Task lower in the order.
+                        if (oldParent == dest)
+                            if (pos > draggedNode.Index)
+                                pos--;
                         System.Diagnostics.Debug.WriteLine($"Dragging to root at position {pos}");
+                        DeleteSubtask(draggedNode.Mark, oldParent.Mark);
                         List<MarkType> tasks = formScheme.Tasks.ToList();
                         tasks.Insert(pos, draggedNode.Mark);
                         System.Diagnostics.Debug.WriteLine($"Deleting {draggedNode?.Mark?.Name} from {oldParent?.Mark?.Name}");
-                        DeleteSubtask(oldParent.Mark, draggedNode.Mark);
+                        formScheme.Tasks = tasks.ToArray<MarkType>();
 
                         // rebuild tree
                         treeView.Nodes[0].Nodes.Clear();
@@ -259,23 +263,23 @@ namespace SIR_CS
             mark.Criteria = criteria.ToArray();
         }
 
-        private void DeleteSubtask(MarkType m, dynamic mark)
+        private void DeleteSubtask(MarkType nodeToDelete, dynamic formerParent)
         {
             List<MarkType> marks;
-            System.Diagnostics.Debug.WriteLine($"Deleting {mark?.Name} from {m?.Name}");
-            if (mark == null)
+            System.Diagnostics.Debug.WriteLine($"Deleting {nodeToDelete?.Name} from {formerParent?.Name}");
+            if (formerParent == null)
             {
                 // We are deleting a Task rather than a Subtask.
                 marks = new List<MarkType>(formScheme.Tasks);
-                marks.Remove(m);
+                marks.Remove(nodeToDelete);
                 formScheme.Tasks = marks.ToArray();
                 return;
             }
-            if (mark.Subtasks != null)
+            if (formerParent.Subtasks != null)
             {
-                marks = new List<MarkType>(mark.Subtasks);
-                marks.Remove(m);
-                mark.Subtasks = marks.ToArray();
+                marks = new List<MarkType>(formerParent.Subtasks);
+                marks.Remove(nodeToDelete);
+                formerParent.Subtasks = marks.ToArray();
             }
         }
 
