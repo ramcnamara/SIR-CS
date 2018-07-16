@@ -131,31 +131,30 @@ namespace SIR_CS
             // Check for dropping over/under the node.
             if (targetNode != treeView.Nodes[0])
             {
-                if (overUnder == 0)
-                {
-                    // Inserting into a node.  
-
-                }
-                if (overUnder < 0)
+                if (overUnder != 0)
                 {
                     dest = dest.Parent as SIRTreeNode;
                     pos = targetNode.Index;
-                    if (!(draggedNode.Mark is CriterionType))
+                    if (!(draggedNode.Mark is CriterionType) && dest.Mark != null)
                         pos -= dest.Mark.CriterionCount();
-                        
-                    System.Diagnostics.Debug.WriteLine($"Inserting before {targetNode?.Mark?.Name} (into {dest?.Mark?.Name}); pos = {pos}");
-                }
-                else if (overUnder > 0)
-                {
-                    dest = dest.Parent as SIRTreeNode;
-                    pos = targetNode.Index + 1;
-                    if (!(draggedNode.Mark is CriterionType) && dest != null)
-                        pos -= dest.Mark.CriterionCount();
-                    System.Diagnostics.Debug.WriteLine($"Inserting after {targetNode?.Mark?.Name} (into {dest?.Mark?.Name}); pos = {pos}");
+                    if (overUnder < 0)
+                        pos--;
+                    string ind = (overUnder > 0 ? "over" : "under");
+                    System.Diagnostics.Debug.WriteLine($"Inserting {ind} {targetNode?.Mark?.Name} (into {dest?.Mark?.Name}); pos = {pos}");
                 }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine($"Dropping onto {targetNode.Mark.Name}; pos = {pos}");
+                }
+
+                // correct for reordering siblings
+                if (targetNode.Parent == draggedNode.Parent)
+                {
+                    int originalPos = draggedNode.Index;
+                    if (!(draggedNode.Mark is CriterionType))
+                        originalPos -= draggedNode.Mark.CriterionCount();
+                    if (pos > originalPos)
+                        pos++;
                 }
 
             }
@@ -188,8 +187,9 @@ namespace SIR_CS
                     if (draggedNode.Mark is CriterionType)
                     {
                         System.Diagnostics.Debug.WriteLine($"{draggedNode.Mark.Name} is a Criterion");
-                        InsertIntoCriteria(draggedNode.Mark as CriterionType, dest.Mark, pos);
                         DeleteCriterion(draggedNode.Mark as CriterionType, oldParent.Mark);
+                        InsertIntoCriteria(draggedNode.Mark as CriterionType, dest.Mark, pos);
+                        
                         // rebuild tree
                         treeView.Nodes[0].Nodes.Clear();
                         if (formScheme.Tasks != null)
@@ -204,7 +204,7 @@ namespace SIR_CS
                     // Are we dragging to the root?
                     if (dest == treeView.Nodes[0])
                     {
-                        System.Diagnostics.Debug.WriteLine($"Dragging to root");
+                        System.Diagnostics.Debug.WriteLine($"Dragging to root at position {pos}");
                         List<MarkType> tasks = formScheme.Tasks.ToList();
                         tasks.Insert(pos, draggedNode.Mark);
                         System.Diagnostics.Debug.WriteLine($"Deleting {draggedNode?.Mark?.Name} from {oldParent?.Mark?.Name}");
@@ -321,7 +321,11 @@ namespace SIR_CS
             if (node2 == treeView.Nodes[0])
                 return !(node1.Mark is CriterionType);
 
-            // Criteria can be dropped between Criteria
+            // Criteria can be dropped anywhere else
+            if (node1.Mark is CriterionType)
+                return true;
+
+            // Only Criteria can be dropped between Criteria
             if (node2.Mark is CriterionType)
                 return node1.Mark is CriterionType;
 
@@ -347,7 +351,7 @@ namespace SIR_CS
         private void DrawLeafTopPlaceholders(SIRTreeNode target, bool possible)
         {
             Graphics g = this.treeView.CreateGraphics();
-            Color color = possible ? Color.Black : Color.LightGray;
+            Color color = possible ? Color.Blue : Color.LightGray;
 
             int targetImageWidth = this.treeView.ImageList.Images[target.ImageIndex].Size.Width + 8;
             int leftOffset = target.Bounds.Left - targetImageWidth;
@@ -371,10 +375,10 @@ namespace SIR_CS
             else
                 leftOffset = target.Bounds.Left - targetImageWidth;
             rightOffset = this.treeView.Width - 4;
-            Color color = possible ? Color.Black : Color.LightGray;
+            Color color = possible ? Color.Blue : Color.LightGray;
             Brush brush = new SolidBrush(color);
 
-            DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Bottom, brush, g);
+            //DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Bottom, brush, g);
             g.DrawLine(new Pen(color, 2), new Point(leftOffset, target.Bounds.Bottom), new Point(rightOffset, target.Bounds.Bottom));
         }
 
@@ -387,10 +391,10 @@ namespace SIR_CS
             int leftOffset, rightOffset;
             leftOffset = target.Bounds.Left - targetImageWidth;
             rightOffset = this.treeView.Width - 4;
-            Color color = possible ? Color.Black : Color.LightGray;
+            Color color = possible ? Color.Blue : Color.LightGray;
             Brush brush = new SolidBrush(color);
 
-            DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Top, brush, g);
+            //DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Top, brush, g);
             g.DrawLine(new Pen(color, 2), new Point(leftOffset, target.Bounds.Top), new Point(rightOffset, target.Bounds.Top));
         }
 
