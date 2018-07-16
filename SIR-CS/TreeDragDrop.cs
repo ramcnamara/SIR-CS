@@ -21,8 +21,6 @@ namespace SIR_CS
             if (e.Button == MouseButtons.Left)
             {
                 draggedNode = e.Item as SIRTreeNode;
-                System.Diagnostics.Debug.Write("Dragging ");
-                System.Diagnostics.Debug.WriteLine((draggedNode == null) ? "null" : draggedNode.Mark.Name);
                 DoDragDrop(((SIRTreeNode)e.Item).Mark, DragDropEffects.Move);
             }
         }
@@ -139,13 +137,8 @@ namespace SIR_CS
                         pos -= dest.Mark.CriterionCount();
                     if (overUnder < 0)
                         pos--;
-                    string ind = (overUnder > 0 ? "over" : "under");
-                    System.Diagnostics.Debug.WriteLine($"Inserting {ind} {targetNode?.Mark?.Name} (into {dest?.Mark?.Name}); pos = {pos}");
                 }
-                else
-                {
-                    System.Diagnostics.Debug.WriteLine($"Dropping onto {targetNode.Mark.Name}; pos = {pos}");
-                }
+
 
                 // correct for reordering siblings
                 if (targetNode.Parent == draggedNode.Parent)
@@ -160,7 +153,6 @@ namespace SIR_CS
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"Dropping onto root");
                 dest = treeView.Nodes[0] as SIRTreeNode;
                 pos = formScheme.Tasks.Length;
             }
@@ -169,23 +161,19 @@ namespace SIR_CS
             // Confirm that the node at the drop location is not 
             // the dragged node or a descendant of the dragged node.
             if (!draggedNode.Equals(targetNode) && CanDropOn(draggedNode, targetNode))
-            {
-                System.Diagnostics.Debug.WriteLine("Can drop");
-                
+            {          
                 if ((e.Effect | DragDropEffects.Move) == DragDropEffects.Move)
                 {
                     // The only way the dragged node's parent can be null is if we 
                     // dragged root, and that's not allowed.
                     if (!(draggedNode.Parent is SIRTreeNode oldParent))
                     {
-                        System.Diagnostics.Debug.WriteLine("Can't drag root");
                         return;
                     }
 
                     // Are we moving criteria?
                     if (draggedNode.Mark is CriterionType)
                     {
-                        System.Diagnostics.Debug.WriteLine($"{draggedNode.Mark.Name} is a Criterion");
                         DeleteCriterion(draggedNode.Mark as CriterionType, oldParent.Mark);
                         InsertIntoCriteria(draggedNode.Mark as CriterionType, dest.Mark, pos);
                         
@@ -207,11 +195,9 @@ namespace SIR_CS
                         if (oldParent == dest)
                             if (pos > draggedNode.Index)
                                 pos--;
-                        System.Diagnostics.Debug.WriteLine($"Dragging to root at position {pos}");
                         DeleteSubtask(draggedNode.Mark, oldParent.Mark);
                         List<MarkType> tasks = formScheme.Tasks.ToList();
                         tasks.Insert(pos, draggedNode.Mark);
-                        System.Diagnostics.Debug.WriteLine($"Deleting {draggedNode?.Mark?.Name} from {oldParent?.Mark?.Name}");
                         formScheme.Tasks = tasks.ToArray<MarkType>();
 
                         // rebuild tree
@@ -226,7 +212,6 @@ namespace SIR_CS
                     }
 
                     // We are dragging a numeric or qualitative task to a subtask position.
-                    System.Diagnostics.Debug.WriteLine("Dragging to subtask position");
                     InsertIntoSubtask(draggedNode.Mark, dest.Mark, pos);
                     DeleteSubtask(draggedNode.Mark, oldParent.Mark);
 
@@ -242,7 +227,6 @@ namespace SIR_CS
                 }
 
             }
-            else System.Diagnostics.Debug.WriteLine("Can't drop");
         }
 
         #region Methods for manipulating model classes to achieve drag and drop reordering
@@ -266,7 +250,7 @@ namespace SIR_CS
         private void DeleteSubtask(MarkType nodeToDelete, dynamic formerParent)
         {
             List<MarkType> marks;
-            System.Diagnostics.Debug.WriteLine($"Deleting {nodeToDelete?.Name} from {formerParent?.Name}");
+          
             if (formerParent == null)
             {
                 // We are deleting a Task rather than a Subtask.
@@ -285,14 +269,7 @@ namespace SIR_CS
 
         private void InsertIntoSubtask(MarkType m, dynamic mark, int pos)
         {
-            if (mark == null)
-            {
-                System.Diagnostics.Debug.WriteLine("Hang on, why is mark null in InsertIntoSubtask?");
-            }
-
-            System.Diagnostics.Debug.WriteLine($"Inserting {m.Name} into {mark.Name} at position {pos}");
-
-            if (mark.Subtasks == null)
+            if (mark?.Subtasks == null)
             {
                 mark.Subtasks = new MarkType[] { m };
             }
