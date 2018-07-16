@@ -160,7 +160,7 @@ namespace SIR_CS
 
             // Confirm that the node at the drop location is not 
             // the dragged node or a descendant of the dragged node.
-            if (!draggedNode.Equals(targetNode) && CanDropOn(draggedNode, targetNode))
+            if (!draggedNode.Equals(targetNode) && CanDropOn(draggedNode, dest))
             {          
                 if ((e.Effect | DragDropEffects.Move) == DragDropEffects.Move)
                 {
@@ -339,7 +339,7 @@ namespace SIR_CS
             int rightOffset = this.treeView.Width - 4;
             Brush brush = new SolidBrush(color);
 
-            DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Top, brush, g);
+            //DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Top, brush, g);
             g.DrawLine(new Pen(color, 2), new Point(leftOffset, target.Bounds.Top), new Point(rightOffset, target.Bounds.Top));
         }
 
