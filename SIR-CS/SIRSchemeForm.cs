@@ -29,6 +29,8 @@ namespace SIR_CS
             subtitleBox.TextChanged += new EventHandler(SetDirty);
             preambleBox.TextChanged += new EventHandler(SetDirty);
 
+            // Set up overlay for treeView drag/drop indicators.
+            treeOverlay = treeView.CreateGraphics();
 
             // populate tree selector
             // WinForms TreeViews don't do databinding so this must be done by hand

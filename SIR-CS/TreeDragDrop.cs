@@ -8,6 +8,10 @@ namespace SIR_CS
 {
     public partial class SIRSchemeForm
     {
+        Graphics treeOverlay;
+        private Point point1;
+        private Point point2;
+
         /// <summary>
         /// Event that fires when drag commences.  Stores the SIRTreeNode that is being 
         /// dragged into the current Form -- we would normally use e.Item for this, but
@@ -86,21 +90,15 @@ namespace SIR_CS
             lastOver = targetNode;
             overUnder = newDrop;
 
-            Refresh();
-
-
             // Draw the separator
             if (dropOver)
             {
-                if (targetNode.Mark is CriterionType)
-                    DrawLeafTopPlaceholders(targetNode, CanDropOn(draggedNode, targetNode));
-                else
-                    DrawFolderTopPlaceholders(targetNode, CanDropOn(draggedNode, dest));
+                ShowDropLocOverNode(targetNode, CanDropOn(draggedNode, dest));
             }
 
             else if (dropUnder)
             {
-                DrawLeafBottomPlaceholders(targetNode, targetNode.Parent as SIRTreeNode, CanDropOn(draggedNode, dest));
+                ShowDropLocUnderNode(targetNode, CanDropOn(draggedNode, dest));
             }
 
             else if (CanDropOn(draggedNode, targetNode))
@@ -196,6 +194,7 @@ namespace SIR_CS
                             if (pos > draggedNode.Index)
                                 pos--;
                         DeleteSubtask(draggedNode.Mark, oldParent.Mark);
+
                         List<MarkType> tasks = formScheme.Tasks.ToList();
                         tasks.Insert(pos, draggedNode.Mark);
                         formScheme.Tasks = tasks.ToArray<MarkType>();
@@ -324,80 +323,37 @@ namespace SIR_CS
         }
 
         #region Methods for drawing images on treeView
-        /// <summary>
-        /// Draw guidelines to let the user know what the effects of dropping in the current location would be.
-        /// </summary>
-        /// <param name="target"></param>
-        /// <param name="possible"></param>
-        private void DrawLeafTopPlaceholders(SIRTreeNode target, bool possible)
+
+        private void ShowDropLocUnderNode(SIRTreeNode target, bool highlight)
         {
-            Graphics g = this.treeView.CreateGraphics();
-            Color color = possible ? Color.Blue : Color.LightGray;
+            DrawLine(target, target.Bounds.Bottom, highlight);
+        }
+
+        private void ShowDropLocOverNode(SIRTreeNode target, bool highlight)
+        {
+            DrawLine(target, target.Bounds.Top, highlight);
+        }
+
+        private void ShowDropLocIntoNode(SIRTreeNode target, bool highlight)
+        {
+            DrawAddToFolderPlaceholder(target, highlight);
+        }
+
+        private void DrawLine(SIRTreeNode target, int yOffset, bool highlight)
+        {
+            Color color = highlight ? Color.Blue : Color.LightGray;
 
             int targetImageWidth = this.treeView.ImageList.Images[target.ImageIndex].Size.Width + 8;
             int leftOffset = target.Bounds.Left - targetImageWidth;
             int rightOffset = this.treeView.Width - 4;
-            Brush brush = new SolidBrush(color);
 
-            //DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Top, brush, g);
-            g.DrawLine(new Pen(color, 2), new Point(leftOffset, target.Bounds.Top), new Point(rightOffset, target.Bounds.Top));
-        }
-
-
-        private void DrawLeafBottomPlaceholders(SIRTreeNode target, SIRTreeNode parent, bool possible)
-        {
-            Graphics g = this.treeView.CreateGraphics();
-
-            int targetImageWidth = this.treeView.ImageList.Images[target.ImageIndex].Size.Width + 8;
-
-            int leftOffset, rightOffset;
-            if (parent != null && parent.ImageIndex != -1)
-                leftOffset = parent.Bounds.Left - (treeView.ImageList.Images[parent.ImageIndex].Size.Width + 8);
-            else
-                leftOffset = target.Bounds.Left - targetImageWidth;
-            rightOffset = this.treeView.Width - 4;
-            Color color = possible ? Color.Blue : Color.LightGray;
-            Brush brush = new SolidBrush(color);
-
-            //DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Bottom, brush, g);
-            g.DrawLine(new Pen(color, 2), new Point(leftOffset, target.Bounds.Bottom), new Point(rightOffset, target.Bounds.Bottom));
-        }
-
-
-        private void DrawFolderTopPlaceholders(SIRTreeNode target, bool possible)
-        {
-            Graphics g = this.treeView.CreateGraphics();
-            int targetImageWidth = this.treeView.ImageList.Images[target.ImageIndex].Size.Width + 8;
-
-            int leftOffset, rightOffset;
-            leftOffset = target.Bounds.Left - targetImageWidth;
-            rightOffset = this.treeView.Width - 4;
-            Color color = possible ? Color.Blue : Color.LightGray;
-            Brush brush = new SolidBrush(color);
-
-            //DrawGuideArrows(leftOffset, rightOffset, target.Bounds.Top, brush, g);
-            g.DrawLine(new Pen(color, 2), new Point(leftOffset, target.Bounds.Top), new Point(rightOffset, target.Bounds.Top));
-        }
-
-        private void DrawGuideArrows(int x1, int x2, int y, Brush brush, Graphics g)
-        {
-            Point[] leftPointer = new Point[5]{
-                                                   new Point(x1, y - 4),
-                                                   new Point(x1, y + 4),
-                                                   new Point(x1 + 4, y),
-                                                   new Point(x1 + 4, y - 1),
-                                                   new Point(x1, y - 5)};
-
-            Point[] rightPointer = new Point[5]{
-                                                    new Point(x2, y - 4),
-                                                    new Point(x2, y + 4),
-                                                    new Point(x2 - 4, y),
-                                                    new Point(x2 - 4, y - 1),
-                                                    new Point(x2, y - 5)};
-
-
-            g.FillPolygon(brush, leftPointer);
-            g.FillPolygon(brush, rightPointer);
+            if (point1 != null)
+            {
+                treeOverlay.DrawLine(new Pen(treeView.BackColor, 2), point1, point2);
+            }
+            point1 = new Point(leftOffset, yOffset);
+            point2 = new Point(rightOffset, yOffset);
+            treeOverlay.DrawLine(new Pen(color, 2), point1, point2);
         }
 
 
@@ -416,6 +372,7 @@ namespace SIR_CS
 
 
             g.FillPolygon(brush, pointer);
+            
         }
 
         #endregion
