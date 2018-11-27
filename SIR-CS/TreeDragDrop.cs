@@ -12,13 +12,16 @@ namespace SIR_CS
         private Point point1;
         private Point point2;
 
+        #region EventHandlers
         /// <summary>
-        /// Event that fires when drag commences.  Stores the SIRTreeNode that is being 
-        /// dragged into the current Form -- we would normally use e.Item for this, but
-        /// although TreeNodes are serializable in C#, they're not in the OSX version of mono.
+        /// Event that fires when TreeNode drag commences.  Stores the SIRTreeNode that is
+        /// being dragged into the current Form.
+        /// 
+        /// We would normally use e.Item for this, but although TreeNodes are 
+        /// serializable in C#, they're not in the OSX version of mono.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">A reference to the object that raised the event.</param>
+        /// <param name="e">Event data.</param>
         private void TreeView_ItemDrag(object sender, ItemDragEventArgs e)
         {
             // Drag on left button
@@ -32,8 +35,8 @@ namespace SIR_CS
         /// <summary>
         /// Event that fires when mouse enters a region while dragging.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">A reference to the object that raised the event.</param>
+        /// <param name="e">Event data.</param>
         private void TreeView_DragEnter(object sender, DragEventArgs e)
         {
             e.Effect = e.AllowedEffect;
@@ -42,13 +45,19 @@ namespace SIR_CS
         /// <summary>
         /// Event that fires while an item is dragged over the TreeView.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">A reference to the object that raised the event.</param>
+        /// <param name="e">Event data.</param>
         private void TreeView_DragOver(object sender, DragEventArgs e)
         {
             // Find node that the mouse pointer is pointing at.
             Point targetPoint = treeView.PointToClient(new Point(e.X, e.Y));
             SIRTreeNode targetNode = treeView.GetNodeAt(targetPoint) as SIRTreeNode;
+
+            if (targetNode == null)
+            {
+                // We are not currently over a node, so we can't do much.
+                return;
+            }
 
             bool dropOver = false;
             bool dropUnder = false;
@@ -81,14 +90,17 @@ namespace SIR_CS
             }
 
             int newDrop = 0;
-            if (dropOver) newDrop++;
-            if (dropUnder) newDrop--;
+            if (dropOver) newDrop--;
+            if (dropUnder) newDrop++;
 
             if (targetNode == lastOver && newDrop == overUnder)
                 return;
 
+            Console.WriteLine(newDrop);
+
             lastOver = targetNode;
             overUnder = newDrop;
+
 
             // Draw the separator
             if (dropOver)
@@ -110,8 +122,8 @@ namespace SIR_CS
         /// <summary>
         /// Event that fires when mouse is released after a drag.
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param name="sender">A reference to the object that raised the event.</param>
+        /// <param name="e">Event data.</param>
         private void TreeView_DragDrop(object sender, DragEventArgs e)
         {
             // Retrieve the client coordinates of the drop location.
@@ -121,111 +133,120 @@ namespace SIR_CS
             SIRTreeNode targetNode = treeView.GetNodeAt(targetPoint) as SIRTreeNode;
 
             // Where should the drop go?
-            SIRTreeNode dest = targetNode;
-            int pos = 0;
+            SIRTreeNode dest = ComputeDropDestination(targetNode, draggedNode);
+            MarkType predecessor = ComputeDropAfter(dest, targetNode, draggedNode);
 
-            // Check for dropping over/under the node.
-            if (targetNode != treeView.Nodes[0])
-            {
-                if (overUnder != 0)
-                {
-                    dest = dest.Parent as SIRTreeNode;
-                    pos = targetNode.Index;
-                    if (!(draggedNode.Mark is CriterionType) && dest.Mark != null)
-                        pos -= dest.Mark.CriterionCount();
-                    if (overUnder < 0)
-                        pos--;
-                }
-
-
-                // correct for reordering siblings
-                if (targetNode.Parent == draggedNode.Parent)
-                {
-                    int originalPos = draggedNode.Index;
-                    if (!(draggedNode.Mark is CriterionType))
-                        originalPos -= draggedNode.Mark.CriterionCount();
-                    if (pos > originalPos)
-                        pos++;
-                }
-
-            }
-            else
-            {
-                dest = treeView.Nodes[0] as SIRTreeNode;
-                pos = formScheme.Tasks.Length;
-            }
-
-
+            // Don't allow drops outside nodes
+            if (dest == null)
+                return;
+ 
             // Confirm that the node at the drop location is not 
             // the dragged node or a descendant of the dragged node.
             if (!draggedNode.Equals(targetNode) && CanDropOn(draggedNode, dest))
             {          
                 if ((e.Effect | DragDropEffects.Move) == DragDropEffects.Move)
                 {
-                    // The only way the dragged node's parent can be null is if we 
-                    // dragged root, and that's not allowed.
-                    if (!(draggedNode.Parent is SIRTreeNode oldParent))
-                    {
-                        return;
-                    }
+                    SIRTreeNode oldParent = draggedNode.Parent as SIRTreeNode;
 
                     // Are we moving criteria?
                     if (draggedNode.Mark is CriterionType)
                     {
                         DeleteCriterion(draggedNode.Mark as CriterionType, oldParent.Mark);
-                        InsertIntoCriteria(draggedNode.Mark as CriterionType, dest.Mark, pos);
-                        
-                        // rebuild tree
-                        treeView.Nodes[0].Nodes.Clear();
-                        if (formScheme.Tasks != null)
-                            foreach (var task in formScheme.Tasks)
-                            {
-                                CreateSubtree((SIRTreeNode)treeView.Nodes[0], task);
-                            }
-                        treeView.ExpandAll();
-                        return;
+                        if (dest.Mark is NumericType)
+                        {
+                            NumericType num = dest.Mark as NumericType;
+                            num.Criteria = (InsertAfterMark(num.Criteria, draggedNode.Mark, predecessor).Cast<CriterionType>()).ToArray();
+                        }
+                        else if (dest.Mark is QualitativeType)
+                        {
+                            QualitativeType qual = dest.Mark as QualitativeType;
+                            qual.Criteria = (InsertAfterMark(qual.Criteria, draggedNode.Mark, predecessor).Cast<CriterionType>()).ToArray();
+                        }
                     }
 
                     // Are we dragging to the root?
-                    if (dest == treeView.Nodes[0])
+                    else if (dest == treeView.Nodes[0])
                     {
-                        // Correct for dragging a top-level Task lower in the order.
-                        if (oldParent == dest)
-                            if (pos > draggedNode.Index)
-                                pos--;
                         DeleteSubtask(draggedNode.Mark, oldParent.Mark);
-
-                        List<MarkType> tasks = formScheme.Tasks.ToList();
-                        tasks.Insert(pos, draggedNode.Mark);
-                        formScheme.Tasks = tasks.ToArray<MarkType>();
-
-                        // rebuild tree
-                        treeView.Nodes[0].Nodes.Clear();
-                        if (formScheme.Tasks != null)
-                            foreach (var task in formScheme.Tasks)
-                            {
-                                CreateSubtree((SIRTreeNode)treeView.Nodes[0], task);
-                            }
-                        treeView.ExpandAll();
-                        return;
+                        formScheme.Tasks = InsertAfterMark(formScheme.Tasks, draggedNode.Mark, predecessor).ToArray();
                     }
 
                     // We are dragging a numeric or qualitative task to a subtask position.
-                    InsertIntoSubtask(draggedNode.Mark, dest.Mark, pos);
-                    DeleteSubtask(draggedNode.Mark, oldParent.Mark);
-
-                    // rebuild tree
-                    treeView.Nodes[0].Nodes.Clear();
-                    if (formScheme.Tasks != null)
-                        foreach (var task in formScheme.Tasks)
+                    else
+                    {
+                        DeleteSubtask(draggedNode.Mark, oldParent.Mark);
+                        if (dest.Mark is NumericType)
                         {
-                            CreateSubtree((SIRTreeNode)treeView.Nodes[0], task);
+                            NumericType num = dest.Mark as NumericType;
+                            if (num.Subtasks == null)
+                                num.Subtasks = new MarkType[1] { draggedNode.Mark };
+                            else
+                                num.Subtasks = InsertAfterMark(num.Subtasks, draggedNode.Mark, predecessor).ToArray();
                         }
-                    treeView.ExpandAll();
+                        else if (dest.Mark is QualitativeType)
+                        {
+                            QualitativeType qual = dest.Mark as QualitativeType;
+                            qual.Subtasks = (InsertAfterMark(qual.Subtasks, draggedNode.Mark, predecessor).Cast<QualitativeType>()).ToArray();
+                        }
+                    }
+                    RebuildTree();
                     return;
                 }
 
             }
+        }
+        #endregion
+
+
+        private void RebuildTree()
+        {
+            treeView.Nodes[0].Nodes.Clear();
+            if (formScheme.Tasks != null)
+                foreach (var task in formScheme.Tasks)
+                {
+                    CreateSubtree((SIRTreeNode)treeView.Nodes[0], task);
+                }
+            treeView.ExpandAll();
+            return;
+        }
+
+        private MarkType ComputeDropAfter(SIRTreeNode dest, SIRTreeNode targetNode, SIRTreeNode draggedNode)
+        {
+            if (targetNode == treeView.Nodes[0])
+            {
+                // We are dropping onto the root node.
+                return formScheme.Tasks[formScheme.Tasks.Length - 1];
+            }
+
+            if (overUnder == 0 && !(targetNode.Mark is CriterionType))
+                // Dropping onto a Task
+                return null;
+
+            if (overUnder < 0)
+                if (targetNode.Index == 0 || ((targetNode.PrevNode as SIRTreeNode).Mark is CriterionType && !(targetNode.Mark is CriterionType)))
+                    // Dropping before first item, or first non-Criterion under Task
+                    return null;
+                else
+                    return (targetNode.PrevNode as SIRTreeNode).Mark;
+
+            return targetNode.Mark;
+        }
+
+        private SIRTreeNode ComputeDropDestination(SIRTreeNode targetNode, SIRTreeNode draggedNode)
+        {
+            if (targetNode == null)
+                return null;
+
+            // If not dropping over or under current destination, we are dropping into the node itself.
+            if (overUnder == 0 && !(targetNode.Mark is CriterionType))
+                return targetNode;
+
+            // Dropping over or under the root node drops onto it
+            if (targetNode.Parent == null)
+                return targetNode;
+
+            // Dropping before or after an ordinary node drops into its parent
+            return targetNode.Parent as SIRTreeNode;
         }
 
         #region Methods for manipulating model classes to achieve drag and drop reordering
@@ -237,13 +258,20 @@ namespace SIR_CS
             mark.Criteria = criteria.ToArray();
         }
 
-        private void InsertIntoCriteria(CriterionType c, dynamic mark, int pos)
+
+        private List<MarkType> InsertAfterMark(MarkType[] m, MarkType mark, MarkType predecessor)
         {
-            if (mark.Criteria == null)
-                mark.Criteria = new CriterionType[] { c };
-            List<CriterionType> criteria = new List<CriterionType>(mark.Criteria);
-            criteria.Insert(pos, c);
-            mark.Criteria = criteria.ToArray();
+            if (m == null)
+                return null;
+
+            List<MarkType> markList = new List<MarkType>(m);
+            if (predecessor == null || markList.IndexOf(predecessor) == -1)
+            {
+                markList.Insert(0, mark);
+            }
+            else
+                markList.Insert(markList.IndexOf(predecessor) + 1, mark);
+            return markList;
         }
 
         private void DeleteSubtask(MarkType nodeToDelete, dynamic formerParent)
@@ -266,19 +294,6 @@ namespace SIR_CS
             }
         }
 
-        private void InsertIntoSubtask(MarkType m, dynamic mark, int pos)
-        {
-            if (mark?.Subtasks == null)
-            {
-                mark.Subtasks = new MarkType[] { m };
-            }
-            else
-            {
-                List<MarkType> marks = new List<MarkType>(mark.Subtasks);
-                marks.Insert(pos, m);
-                mark.Subtasks = marks.ToArray();
-            }
-        }
         #endregion
 
 
