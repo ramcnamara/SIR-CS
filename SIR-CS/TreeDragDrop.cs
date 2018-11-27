@@ -28,7 +28,11 @@ namespace SIR_CS
             if (e.Button == MouseButtons.Left)
             {
                 draggedNode = e.Item as SIRTreeNode;
-                DoDragDrop(((SIRTreeNode)e.Item).Mark, DragDropEffects.Move);
+
+                //Don't drag the root node.
+                if (draggedNode == treeView.Nodes[0])
+                    return;
+                DoDragDrop(draggedNode.Mark, DragDropEffects.Move);
             }
         }
 
