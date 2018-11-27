@@ -31,7 +31,10 @@ namespace SIR_CS
 
                 //Don't drag the root node.
                 if (draggedNode == treeView.Nodes[0])
+                {
+                    draggedNode = null;
                     return;
+                }
                 DoDragDrop(draggedNode.Mark, DragDropEffects.Move);
             }
         }
